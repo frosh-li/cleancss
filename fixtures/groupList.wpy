@@ -1,0 +1,3756 @@
+<template lang="pug">
+view#app(
+  :class='{ "overflow-hidden" : (globalDataAll.userIsPartner && globalDataAll.close) || (globalDataAll.rest == 1) || isCouponShow }'
+)
+  leader-change-card(
+    wx:if="{{ newLogin && !isHasPhone }}"
+    title="登录抢购商品，立享实惠"
+    buttonTitle="去登录"
+    bind:LeaderChangeCardPhoneNum="LeaderChangeCardPhoneNum"
+    bind:LeaderChangeCardClose="LoginClose"
+  )
+
+  leader-change-card(
+    wx:if="{{ ifShowPartner }}"
+    title="当前访问团长不是常用团长"
+    buttonTitle="选为常用团长"
+    bind:LeaderChangeCardConfirm="LeaderChangeCardConfirm"
+    bind:LeaderChangeCardClose="LeaderChangeCardClose"
+  )
+
+  leader-change-card(
+    wx:if="{{ isShowDownLoadApp }}"
+    title="去APP下单购买，购物体验更流畅"
+    buttonTitle="进入APP"
+    bind:LeaderChangeCardConfirm="LeaderDownAppConfirm"
+    bind:LeaderChangeCardClose="LeaderDownAppClose"
+  )
+
+  LeaderChangeCard(
+    wx:if="{{ modalShowDoubleIf }}"
+    :originLeaderMessage.sync="originLeader"
+    :sharedLeaderMessage.sync="sharedLeader"
+    :defaultPartnerId.sync="defaultPartnerId"
+  )
+
+  view.cartPosition(
+    :class="{ 'cartPosiFir' : detail.paly == 1, 'cartPosiSec' : detail.paly == 2}"
+    style="bottom: {{ detail.y }}rpx; left: {{ detail.x }}rpx;"
+  )
+    image(src="https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/ActShopping.png")
+
+  Specification(
+    hidden="{{ !specificationIf }}"
+    @touchmove.stop="touchmove"
+    :allAttrListData.sync="allAttrListData"
+    :allSelected.sync="allSelected"
+    :curMerchType.sync="curMerchType"
+    :goodsCount.sync="goodsCount"
+    :allAttrIdObj.sync="allAttrIdObj"
+    :attrMerchTypeId.sync="attrMerchTypeId"
+    :merch.sync="merchData"
+  )
+
+  view.heightAuto(
+    :class="{'margin--tabbar':supportCustomTabBar, 'appWhite': kingKongList.length}"
+  )
+    block(wx:if="{{ loadAll.leaderLoad }}")
+      view.navigationLoad
+    custom-navigation(
+      wx:else
+      noSearch="{{searchDemote}}"
+      globalDataAll="{{ globalDataAll }}"
+      hotList="{{ hotList }}"
+      newStyle="{{ newStyle }}"
+      bind:LeaderCardGotoSelect="LeaderCardGotoSelect"
+    )
+    block(wx:if="{{ newStyle }}")
+      block(wx:if="{{ globalDataAll.rest != 1 && globalDataAll.grouponId && globalDataAll.grouponId != 0}}")
+        view.threeYear.threeYearOne(wx:if="{{!isShowCashbackBanner && !_isShowNewuserActivity}}")
+        view.threeYear.threeYearTwo(wx:elif="{{ !isNew && isShowCashbackBanner && !_isShowNewuserActivity}}")
+        view.threeYear.threeYearThree(wx:elif="{{ !isNew && isShowCashbackBanner && _isShowNewuserActivity}}")
+        view.threeYear(wx:else)
+          view.threeYearColor
+      view.threeYearColor(wx:else)
+    view.tipWrap(wx:if="{{!notFinishedAddTip || showAddtip}}")
+      view.addTip(wx:if="{{!notFinishedAddTip}}")
+        view.addTipLeft 添加到我的小程序，天天享实惠
+        view.addTipRight( @tap="tipModalShow") 添加
+          //- image.arrow(src="/statics/white_arrow.png" )
+      view.tipModalWrap(
+        @tap="tipModalHidden"
+        wx:if="{{showAddtip}}"
+      )
+        image.tipAddImg.tipAddImgIos(
+          wx:if="{{systemType == 'iOS'}}"
+          style="top: {{ version >= 7 ? statusBarHeight * 2 + 88 : 0 }}rpx"
+          mode="widthFix"
+          src="https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/ios_tip.png"
+        )
+        image.tipAddImg.tipAddImgAndroid(
+          wx:elif="{{systemType == 'Android'}}"
+          style="top: {{ version >= 7 ? statusBarHeight * 2 + 98 : 0 }}rpx"
+          mode="widthFix"
+          src="https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/android_tip.png"
+        )
+    block(wx:if="{{ loadAll.leaderLoad }}")
+      view.leaderLoad
+        view.searchLoad
+        view.leadLoad
+          view.imageLoad.l
+          view.textLoad.l
+            view.loadP
+            view.loadP
+          view.shareLoad.r
+          view.shareLoad.r
+    view.leader-card-wrap(wx:else)
+      leader-card(
+        wx:if="{{ leader }}"
+        leader="{{ leader }}"
+        fansCount="{{ fansCount }}"
+        globalDataAll="{{ globalDataAll }}"
+        joinList="{{ joinList }}"
+        newStyle="{{ newStyle }}"
+        bind:LeaderCardGotoNotice="LeaderCardGotoNotice"
+        bind:LeaderCardGotoChange="LeaderCardGotoChange"
+        bind:LeaderCardGotoPopup="LeaderCardGotoPopup"
+        bind:LeaderCardTelphone="LeaderCardTelphone"
+      )
+      view.category-list-wrap(
+        class="{{ showCategory ? 'showCategory' : '' }}"
+        style="top: {{ platform == 'android' ? statusBarHeight * 2 + 98 : statusBarHeight * 2 + 86 }}rpx"
+      )
+        category-list(
+          wx:if="{{ categoryTopList.length }}"
+          categoryTopList="{{ categoryTopList }}"
+          bind:change="gotoKingKongMerchList"
+          bind:gotoCategory="gotoCategory"
+          newStyle="{{newStyle}}"
+        )
+    block(wx:if="{{ globalDataAll.rest == 1 }}")
+      view.rest-result-wrapper
+        result(subTitle="团长休息中" icon="https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/shop-result.png")
+        view.switch-btn(wx:if="{{ globalDataAll.userType !== 3 }}" @tap="changeGroup") {{ globalDataAll.userType === 4 ? '我要营业' : '切换团长' }}
+    block(wx:else)
+      cashback-banner(wx:if="{{isShowCashbackBanner}}"
+        bind:openCashbackInfo="openCashbackInfo"
+        bind:closeCashbackBanner="closeCashbackBanner"
+        startNum="{{ startNum }}"
+        discountAmount="{{discountAmount}}"
+        cashbackSystemTime="{{cashbackSystemTime}}"
+        cashbackEndTime="{{cashbackEndTime}}"
+        numberCoupon="{{numberCoupon}}"
+        activityImgUrl="{{activityImgUrl}}"
+        isNew="{{isNew}}"
+        isMultiPlan="{{isMultiPlan}}"
+        userIsPartner="{{globalDataAll.userIsPartner}}"
+        userType="{{globalDataAll.userType}}"
+        newUserMerchandiseList="{{ newUserMerchandiseList }}"
+        newComerZoneCouponList="{{ newComerZoneCouponList }}"
+        isShowNewuserActivity="{{isShowNewuserActivity}}"
+        isUsePage="groupList"
+        newStyle="{{ newStyle }}"
+      )
+      view(wx:if="{{ isShowNewuserActivity && isNewUser == 1 }}" style='position: relative;')
+        view.page-new-user-bg(wx:if="{{kingKongList.length == 0 }}")
+        new-user-expert(
+          bind:seeMoreNuserMain="seeMoreNuserMain"
+          bind:newReceivedCoupon="newReceivedCoupon"
+          newUserMerchandiseList="{{ newUserMerchandiseList }}"
+          newComerZoneCouponList="{{ newComerZoneCouponList }}"
+          isReceived="{{ isReceived }}"
+          couponSum="{{ couponSum }}"
+          isShowCashbackBanner="{{ isShowCashbackBanner }}"
+          bind:add2Cart="merchAdd2Cart"
+          bind:sub2Cart="merchAdd2Cart"
+          receiveAnimation="{{ receiveAnimation }}"
+          newStyle="{{ newStyle }}"
+        )
+      block(wx:if="{{ isShowNewuserActivity &&  isNewUser == 0 && (globalDataAll.userIsPartner || globalDataAll.userType == 3) }}")
+        view.invite-bg(bindtap="gotoNewUserSpecial" class="{{isShowNewuserActivity && isNewUser == 1?'':'pt-20'}} {{newStyle ? 'bg-transparent':''}}")
+          image(src="https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/v3-new-user-bar.png" class="partner-invite")
+          text.btn 点击邀请
+      block(wx:if="{{ globalDataAll.userIsPartner && globalDataAll.close }}")
+        view.rest-result-wrapper
+          result(subTitle="团长被暂停" nextTitle="可切换附近其他团长下单哦"  icon="https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/shop-result.png")
+      block(wx:elif!="{{ !globalDataAll.grouponId || globalDataAll.grouponId == 0 }}")
+        block(wx:if="{{ loadAll.secKillLoad }}")
+          view.secKillLoad
+            view.secHeader
+            view.secContent
+              view.secList
+              view.secList
+              view.secList
+            view.secMerch
+              view.l
+              view.r
+                view.secP
+                view.secP
+                view.secP
+        block(wx:else)
+          app-error(wx:if="{{secondKillError}}"
+            message="{{secondKillError.errMsg}}"
+          )
+
+          view.seckill-list-wrap.leader-card-wrap(
+            class="{{ kingKongList.length ? 'bgGrey' : '' }}"
+            wx:if="{{ !secondKillError && secKillList.length }}"
+          )
+            seckill-list(
+              secKillSelectTimeCurIndex="{{ secKillSelectTimeCurIndex }}"
+              skillNum="{{ skillNum }}"
+              secKillList="{{ secKillList }}"
+              secKillData="{{ secKillData }}"
+              commingSoon="{{ commingSoon }}"
+              pendingArroval="{{ globalDataAll.pendingArroval }}"
+              newStyle="{{ newStyle }}"
+              bind:selectTime="secKillSelectTimeFn"
+              bind:seckillMore="seckillMore"
+              bind:seckillDetails="seckillDetails"
+              bind:seckillPay="seckillPay"
+              bind:commingSoonBtn="commingSoonBtn"
+              bind:subScribeBtn="subScribeBtn"
+              bind:cancelSubScribeBtn="cancelSubScribeBtn"
+            )
+          view.rest-result-wrapper.rest-grey-wrapper
+            result(subTitle="目前还没有开始的团购，请等待~" icon="https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/shop-result.png")
+      view(wx:else)
+        view.page-bg
+          view.king-kong-bg(wx:if="{{ kingKongList.length && !newStyle }}")
+          view.king-kong.mb-18(wx:if="{{kingKongList.length}}" :class="{'threeYear-king-kong': newStyle, 'threeYear-new': !(!isNew && isShowCashbackBanner || !isShowCashbackBanner && !_isShowNewuserActivity), 'marginTop150': !isShowCashbackBanner && !_isShowNewuserActivity}")
+            view.king-kong-header(:class="{'radius-12': !newStyle && (isShowCashbackBanner || _isShowNewuserActivity), 'mb24': !newStyle && !isShowCashbackBanner && !_isShowNewuserActivity}")
+              view 平价好货
+              view.circle-dot
+              view 商品每日更新
+              view.circle-dot
+              view {{getDeliverDate}}
+              view.header-text-natural( @tap="gotoAboutUs")
+                text 平台资质
+                image(wx:if="{{newStyle}}" src="https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/header-text-right.png")
+                image(wx:else src="https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/header-text-right-black.png")
+            king-kong(
+              bind:gotoKingKongMerchList="gotoKingKongMerchList"
+              kingKongList="{{ kingKongList }}"
+              kingkongTwo="{{ kingkongTwo }}"
+              newStyle="{{ newStyle }}"
+            )
+          block(wx:if="{{ loadAll.bannerLoad }}")
+            view.bannerLoad
+              view.bannerContent
+          view(wx:elif="{{ bannerList.length }}" class="marginTopBottom20")
+            banner-list(
+              list="{{ bannerList }}"
+              timestamp="{{ timestamp }}"
+              invenToryShow="{{ invenToryShow }}"
+              bind:BannerListGotoBanner="BannerListGotoBanner"
+              bind:BannerListGotoCoupon="BannerListGotoCoupon"
+            )
+          view.marginTopBottom20(wx:if="{{activityBooking.showMerchList.length>3}}")
+            //- 今日必拼
+            activity-booking(
+              activityBooking="{{ activityBooking }}"
+              timestamp="{{ timestamp }}"
+              bind:ActivityTypeClick="ActivityBookingClick"
+              bind:toGroupDetail="toGroupDetail"
+              newStyle="{{ newStyle }}"
+            )
+
+        block(wx:if="{{ loadAll.secKillLoad }}")
+          view.secKillLoad
+            view.secHeader
+            view.secContent
+              view.secList
+              view.secList
+              view.secList
+            view.secMerch
+              view.l
+              view.r
+                view.secP
+                view.secP
+                view.secP
+        block(wx:else)
+          app-error(wx:if="{{secondKillError}}"
+            message="{{secondKillError.errMsg}}"
+            bind:refresh="secondKillRefresh"
+          )
+
+          view.seckill-list-wrap.seckill-list-wrapTop.marginTopBottom20(wx:if="{{ !secondKillError && secKillList.length }}" class="{{ kingKongList.length ? 'bgGrey' : '' }}")
+            seckill-list(
+              secKillSelectTimeCurIndex="{{ secKillSelectTimeCurIndex }}"
+              skillNum="{{ skillNum }}"
+              secKillList="{{ secKillList }}"
+              secKillData="{{ secKillData }}"
+              commingSoon="{{ commingSoon }}"
+              isHasPhone="{{ isHasPhone }}"
+              pendingArroval="{{ globalDataAll.pendingArroval }}"
+              newStyle="{{ newStyle }}"
+              bind:selectTime="secKillSelectTimeFn"
+              bind:seckillMore="seckillMore"
+              bind:seckillDetails="seckillDetails"
+              bind:seckillPay="seckillPay"
+              bind:commingSoonBtn="commingSoonBtn"
+              bind:subScribeBtn="subScribeBtn"
+              bind:cancelSubScribeBtn="cancelSubScribeBtn"
+              bind:setPhone="setPhone"
+            )
+          //- view(wx:if="{{activityList.length && secKillList.length}}" style="padding-top: 20rpx;background: #f2f2f2;")
+          app-error(wx:if="{{activityTypeError}}"
+            message="{{activityTypeError.errMsg}}"
+            bind:refresh="activityTypeRefresh"
+          )
+          view(wx:elif="{{ activityList.length }}" class='marginTopBottom20')
+            activity-type(
+              isSeckill="{{ secKillList.length }}"
+              TypeList="{{ activityList }}"
+              timestamp="{{ timestamp }}"
+              bind:ActivityTypeClick="ActivityTypeClick"
+            )
+        block(wx:if="{{ loadAll.merchLoad }}")
+          view.secKillLoad
+            view.secHeader
+            view.secHeader
+            view.secContent
+              view.marList
+              view.marList
+              view.marList
+              view.marList
+              view.marList
+            view.secMerch
+              view.l
+              view.r
+                view.secP
+                view.secP
+                view.secP
+        block(wx:else)
+            app-error(wx:if="{{merchListError}}"
+              message="{{merchListError.errMsg}}"
+              bind:refresh="merchListRefresh"
+            )
+            view.bgGrey.mt-20-sub(wx:else)
+              view.merchListGoupon(
+                wx:if="{{ merchList[1].length > 0 }}"
+                class="{{ merchListScreen.merchListNo ? 'merchLisMH' : '' }}"
+              )
+                view(wx:for="{{ merchList }}" wx:for-item="list" wx:key="index" wx:for-index="page")
+                  block(
+                    wx:for="{{ list }}"
+                    wx:key="index" wx:for-item="item"
+                    wx:if!="{{ paging.page >= page - 0 }}"
+                  )
+                    new-merch-video.merchVideo(
+                      wx:if="{{ item.coverVideo || item.hotSaleTime }}"
+                      line="{{ list.length - 1 > index }}"
+                      item="{{ item }}"
+                      index="{{ index }}"
+                      page="{{ page }}"
+                      isHasPhone="{{ isHasPhone }}"
+                      timeState="{{ timeState }}"
+                      special="{{ false }}"
+                      vedioId="{{ vedioId }}"
+                      isFull="{{ false }}"
+                      groupon="{{ true }}"
+                      grouponEndTime="{{ grouponEndTime }}"
+                      data-item="{{ item }}"
+                      data-page="{{ page }}"
+                      data-index="{{ index }}"
+                      data-id="{{ item.merchtypeid }}"
+                      bind:bindPlay="merchBindPlay"
+                      bind:bindended="merchBindended"
+                      bind:add2Cart="merchAdd2Cart"
+                      bind:sub2Cart="merchAdd2Cart"
+                      bind:merchGoto="merchGoto"
+                      bind:showHotSaleTip="showHotSaleTip"
+                      bind:gotoDiamond="gotoDiamond"
+                      bind:setPhone="setPhone"
+                    )
+                    new-merch-normal(
+                      wx:else
+                      line="{{ list.length - 1 > index }}"
+                      item="{{ item }}"
+                      index="{{ index }}"
+                      page="{{ page }}"
+                      special="{{ false }}"
+                      groupon="{{ true }}"
+                      isHasPhone="{{ isHasPhone }}"
+                      timeState="{{ timeState }}"
+                      grouponEndTime="{{ grouponEndTime }}"
+                      data-item="{{ item }}"
+                      data-page="{{ page }}"
+                      data-index="{{ index }}"
+                      bind:add2Cart="merchAdd2Cart"
+                      bind:sub2Cart="merchAdd2Cart"
+                      bind:tap="merchGoto"
+                      bind:gotoDiamond="gotoDiamond"
+                      bind:setPhone="setPhone"
+                    )
+              view.rest-result-wrappe-list(wx:else)
+                result(subTitle="暂无热卖商品" icon="https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/content-result.png")
+              view.bottomLoading
+                view(wx:if="{{ paging.loading && !paging.finished }}") 加载中...
+                view(wx:elif="{{ paging.loading && paging.finished }}") 我们是有底线的
+
+
+    ModalCoupon(
+      wx:if="{{ !modalShowDoubleIf && isCouponShow }}"
+      :packetImg.sync="packetImg"
+      :bgColor.sync="bgColor"
+      :bottomColor.sync="bottomColor"
+      :couponList.sync="couponList"
+      :isHasPhone.sync="isHasPhone"
+    )
+
+    view.popup.sharePopup(wx:if="{{ sharePopupState }}")
+      view.popup__mask(
+        @touchmove.stop="touchmove"
+        @tap="closeSharePopup(null)"
+      )
+      view.popup_body
+        view.popup__header 分享
+        view.popup__main
+          button.wechat(
+            open-type="share"
+            @tap="closeSharePopup('wxfriend')"
+          )
+            image(src="https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/icon-share-wechat.png")
+            text 微信好友
+          view.timeline(@tap="shareTimeline('homePage')")
+            image(src="https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/icon-share-timeline.png")
+            text 生成海报
+        view.popup__footer(
+          @tap="closeSharePopup(null)"
+        ) 取消
+
+    ModalDownLoad(
+      wx:if="{{ downloadModalState }}"
+      origin="homePage"
+      :downloadAuthFail.sync="downloadAuthFail"
+    )
+block(wx:if="{{ !(globalDataAll.userIsPartner && globalDataAll.close) && globalDataAll.rest != 1 }}")
+  user-list(
+    wx:if="{{ joinList.length > 0 }}"
+    list="{{ joinList }}"
+  )
+custom-loading(
+  isShow="{{ isShowLoading }}"
+)
+app-modal.phone_modal(
+  wx:if="{{ phoneModaShow }}"
+  closable="{{ false }}"
+  scaleAnimation
+  @tap="hidePhoneModal()"
+)
+  view(slot="main")
+    view.main
+      view.content
+       text 该团长非您的默认提货团长，您无法查看他的联系方式，进入“我的”页面切换默认团长。
+      view.footer 知道了
+//- 复制拼团信息弹窗
+app-modal.modal__copy(
+  wx:if="{{ copyModalState && globalDataAll.rest != 1 }}"
+  scaleAnimation
+  bind:close="closeCopyModal"
+)
+  view(slot="main")
+    view.header 复制拼团信息
+    textarea.main(
+      fixed="true"
+      value="{{copyContent}}"
+      maxlength="10000"
+    )
+    view.footer(@tap="copy") 一键复制
+
+mp-actionsheet(bind:actiontap="actionsheetClick" bind:close="actionsheetClose" show="{{showActionsheet}}" actions="{{[{ text: '呼叫', value: 1 }]}}" title="{{ leader.mobileDisplay }}")
+
+block(wx:if="{{ switchShow }}")
+  view.deleteGoodsModalMask
+  view.deleteGoodsModal
+    view.title 提示
+    view.content 确认要立即开始营业吗？
+    view.btnGroup
+      view.tab.normal(bindtap="cancleSwitchGroup") 再想想
+      view.tab.possible(bindtap="confirmSwitchGroup") 是的
+cashback-modal(
+  wx:if="{{isShowCashbackModal}}"
+  copyWriting="{{copyWriting}}"
+  bind:closeCashbackModal="closeCashbackModal")
+popup-modal(
+  wx:if="{{!modalShowDoubleIf && popupActivityInfo && !isCouponShow}}"
+  columnType="homepage"
+  popupInfo="{{ popupActivityInfo }}"
+  bind:close="closePopupModal")
+
+view.turn-table(wx:if="{{ drawPopupInfo && (drawPopupInfo.canPopUp == 1) }}" class="{{anminaterStyle}}" bindtap="toTurnTable")
+  image.turn-table-img(src="{{drawPopupInfo.imgUrl}}" mode="widthFix")
+
+</template>
+
+<script>
+import wepy from 'wepy'
+import { connect } from 'wepy-redux'
+import AttrMixin from '@/mixins/attr'
+import DownLoadImage from '@/mixins/downLoadImage'
+import {
+  MERCHANDISEFN,
+  USERCOUPON,
+  GETCART,
+  SETTYPEDEFAULT
+} from '@/store/types/cart'
+import { ORIGINLEADER, GETGROUPONTIME } from '@/store/types/groupList'
+import ModalCoupon from '@/components/noData/modalCoupon'
+import Specification from '@/components/group/Specification'
+import ModalDownLoad from '@/components/noData/modalDownLoad'
+import LeaderChangeCard from '@/components/noData/leaderChangeCard'
+import auth from '@/lib/auth'
+import filterOptions from '@/lib/filterOptions'
+import tip from '@/lib/tip'
+import { multiply } from '@/lib/mathBase'
+import throttle from '@/utils/throttle'
+import untils from '@/helper/untils'
+import UserLocation from '@/mixins/userLocation'
+import { formatSeckillStatus, formatSeckillDayTitle } from '@/utils'
+import {
+  PAY_ORDER_SOURCE,
+  SUBSCRIBE_MESSAGE_TEMPLATE,
+  ORDER_SOURCE
+} from '@/constants'
+import {
+  getBannerList,
+  getSecKillList,
+  getGroupCategoryList,
+  getGroupMerchList,
+  getGroupCopyInfo,
+  getQueryCartNum,
+  getUserToPartnerLocation,
+  getSkyCheck,
+  getSkyReceives,
+  setListActivity,
+  updatePartnerHistory,
+  getKingKongList,
+  getKingKongStatus,
+  getIndexPartnerInfo,
+  secondkillSubscribe,
+  secondkillCancelSubscribe,
+  getLatesBuyersOrderList,
+  getCategoryTop,
+  updateBPid,
+  getKeywordGroup,
+  newcomerActivity,
+  newcomerZone,
+  partnerRest,
+  popupActivity,
+  getBackActivity,
+  getDrawPopup,
+  getScoreLogin
+} from '@/api'
+import {bookingDaily} from '@/api/booking'
+import { entryGroupList, scanCodeToIndex,
+  clickIndexGoodsListToGoodsDetail,
+  getMonitoring,
+  clickshtGoodsDetail,
+  clickHomepageShare,
+  clickFlashkilltab,
+  clickShtFlash,
+  shtKingkongPageHotSale,
+  clickIndexBannerActive,
+  clickIndexBannertoCoupon,
+  allGoodsMoveToBottom,
+  clickCopyGroupon,
+  clickAllCopyBtn,
+  indexDiamondShow,
+  toDiamondSubPage,
+  clickShtFlashQuickBy,
+  homePageBuyNow,
+  shtkingkong,
+  changePartner,
+  shtNewCustgetAllCouponHomepage,
+  popupModalInitTrack,
+  clickShareModalBtnIndex,
+  toGroupBookingDetail
+} from '@/api/track'
+let stopWatch = null
+let anminaterTimer = null
+let categoryTopRequestFlag = false
+// let skellWatch = null
+const getData = () => ({
+  isMultiPlan: false,
+  isNew: false,
+  cashbackSystemTime: '',
+  cashbackEndTime: '',
+  isShowCashbackBanner: false,
+  startNum: '',
+  discountAmount: '',
+  isShowCashbackModal: false,
+  activityImgUrl: '',
+  numberCoupon: '',
+  copyWriting: [],
+  phoneModaShow: false,
+  supportCustomTabBar: true,
+  secKillSelectTimeCurIndex: 0,
+  secondKillError: null,
+  merchListError: null,
+  loaded: false,
+  pullDownRefresh: true,
+  timeState: 0, // 0： 团购未开始，1：已开始，2：已结束
+  globalDataAll: {
+    close: false,
+    grouponId: null,
+    partnerId: null,
+    userIsOld: true,
+    userIsPartner: false,
+    showGroupMember: 1,
+    rest: 0,
+    userType: 0,
+    pendingArroval: 0
+  },
+  defaultPartnerId: null,
+  leader: null,
+  fansCount: 0,
+  joinList: [],
+  bannerList: [],
+  activityList: [],
+  activityBooking: [], // 拼团
+  secKillList: [],
+  categoryList: [],
+  kingKongList: [],
+  seconds: 0,
+  merchList: {},
+  interval: null,
+  categoryId: 0,
+  paging: {
+    page: 1,
+    limit: 20,
+    loading: true,
+    finished: false
+  },
+  copyModalState: false,
+  copyContent: '',
+  sharePopupState: false,
+  shareInfo: null,
+  downloadModalState: false,
+  shareTimelineUrl: '',
+  groupontype: null,
+  selectCityState: false,
+  cityList: [],
+  cityListIndex: null,
+  x: 0,
+  y: 0,
+  windowHeight: 0,
+  isSetTabBarItem: false, //  是否更换底部导航图标
+  isHide: false, // 是否切到其他页面
+  downloadAuthFail: false,
+  categoryListTop: null,
+  merchListScreen: {
+    merchListNo: true,
+    merchListTop: false
+  },
+  timestamp: null,
+  showGroupMember: 1,
+  options: null,
+  formatCountdown: {
+    _diff: null,
+    hour: '00',
+    min: '00',
+    sec: '00'
+  },
+  once: false,
+  canCopyShow: true,
+  modalShowDoubleIf: false, // 判断是否默认团长弹窗
+  ifShowPartner: false, // 判断是否默认弹窗 底部
+  isShowDownLoadApp: false, // 判断是否显示引导用户下载app
+  newLogin: false,
+  ifAvatar: true,
+  isCouponShow: false,
+  couponList: [],
+  loadAll: {
+    leaderLoad: true,
+    bannerLoad: true,
+    secKillLoad: true,
+    merchLoad: true
+  },
+  specificationIf: false,
+  merchData: {},
+  toBuyType: 0,
+  allAttrIdObj: {},
+  attrMerchTypeId: null,
+  curMerchType: {},
+  isShopList: true,
+  isMerchList: true,
+  allAttrListData: [],
+  goodsCount: 1,
+  bannerShowKey: null,
+  secKillData: [],
+  skillNum: 0,
+  activeStatus: null,
+  allSelected: true,
+  cateTopHeight: null,
+  showAddtip: false,
+  systemType: '',
+  notFinishedAddTip: true,
+  originLeader: {},
+  sharedLeader: {},
+  scrollPage: 1,
+  statusBarHeight: 0,
+  version: '',
+  platform: null,
+  cartTotalCount: 0,
+  monitoring: {},
+  packetImg:
+    'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/group_hongbaohead.png',
+  bgColor: '#FF4703',
+  bottomColor: '#FF4703',
+  commingSoon: false,
+  vedioId: null,
+  detail: {
+    paly: 0
+  },
+  detailPosi: null,
+  showActionsheet: false,
+  kingkongTwo: false,
+  invenToryShow: false,
+  showCategory: false,
+  categoryTopList: [],
+  getDeliverDate: null,
+  grouponEndTime: null,
+  hotList: [],
+  isShowLoading: true,
+  newUserMerchandiseList: [],
+  newComerZoneCouponList: [],
+  isShowNewuserActivity: false,
+  _isShowNewuserActivity: false, //新人专区是否显示
+  isReceived: false,
+  couponSum: 0,
+  receiveAnimation: null,
+  isNewUser: null,
+  switchShow: 0,
+  popupActivityInfo: null, // 弹屏活动信息
+  searchDemote: 0,
+  newStyle: false,
+  anminaterStyle: '',
+  drawPopupInfo: null //抽奖弹窗信息
+})
+@connect(
+  {
+    cartMap(state) {
+      return state.cart.cartMap
+    },
+    totalCount(state) {
+      return state.cart.totalCount
+    },
+    grouponStartTime(state) {
+      return state.groupList.grouponStartTime
+    }
+  },
+  {
+    GETCART,
+    MERCHANDISEFN,
+    USERCOUPON,
+    SETTYPEDEFAULT,
+    ORIGINLEADER,
+    GETGROUPONTIME
+  }
+)
+export default class GroupList extends wepy.page {
+  config = {
+    navigationBarTitleText: '十荟团',
+    onReachBottomDistance: 2000,
+    enablePullDownRefresh: true,
+    navigationStyle: 'custom',
+    usingComponents: {
+      'cashback-banner': '/customComponents/CashbackBanner/index',
+      'cashback-modal': '/customComponents/CashbackModal/index',
+      'app-error': '/customComponents/AppError/index',
+      'app-modal': '/customComponents/AppModal/index',
+      'king-kong': '/customComponents/KingKong/index',
+      'new-merch-normal': '/customComponents/NewMerchNormal/index',
+      'new-merch-video': '/customComponents/NewMerchVideo/index',
+      'banner-list': '/customComponents/BannerList/index',
+      'leader-card': '/customComponents/LeaderCard/index',
+      'activity-type': '/customComponents/Activity/index',
+      'custom-navigation': '/customComponents/CustomNavigation/index',
+      'seckill-list': '/customComponents/SecKillList/index',
+      'category-list': '/customComponents/CategoryList/index',
+      'mp-actionsheet': '/customComponents/actionsheet/actionsheet',
+      result: '/customComponents/Result/index',
+      'sht-tag': '/customComponents/@shihuituan/design-weapp/tag/index',
+      'user-list': '/customComponents/UserList/index',
+      'sht-icon': '/customComponents/@shihuituan/design-weapp/icon/index',
+      'custom-loading': '/customComponents/CustomLoading/index',
+      'leader-change-card': '/customComponents/LeaderChangeCard/index',
+      'new-user-expert': '/customComponents/NewUserExpert/index',
+      'activity-booking': '/customComponents/Booking/index',
+      'popup-modal': '/customComponents/popupModal/index'
+    }
+  }
+
+  components = {
+    Specification,
+    ModalCoupon,
+    ModalDownLoad,
+    LeaderChangeCard
+  }
+
+  data = getData()
+
+  mixins = [AttrMixin, DownLoadImage, UserLocation]
+  methods = {
+    openCashbackInfo () {
+      this.isShowCashbackModal = true
+    },
+    closeCashbackModal () {
+      this.isShowCashbackModal = false
+    },
+    closeCashbackBanner () {
+      // 刷新下单返券的活动接口
+      const { grouponId, partnerId } = this.globalDataAll
+      this.getBackActivityFn(partnerId, grouponId)
+    },
+    hidePhoneModal() {
+      this.phoneModaShow = false
+    },
+    touchmove() {},
+    tipModalShow() {
+      this.showAddtip = true
+      this.notFinishedAddTip = true
+      // 存数据
+      wepy.setStorageSync('FINISHED_ADD', true)
+    },
+    tipModalHidden() {
+      this.showAddtip = false
+    },
+    bindopensetting(events) {
+      const { 'scope.writePhotosAlbum': auth } = events.detail.authSetting
+      this.downloadAuthFail = !auth
+    },
+    seeMoreNuserMain(event) {
+      const { index } =event && event.detail ? event.detail : 0
+      let pointIndex = index ? Number(index) + 1 : 0
+      const { grouponId, partnerId } = this.globalDataAll
+      wx.navigateTo({
+        url: `/pagesFeatures/newUsersMain/newUserSpecial?grouponId=${grouponId}&partnerId=${partnerId}&pointIndex=${pointIndex}`
+      })
+    },
+    async newReceivedCoupon() {
+      const { grouponId, partnerId } = this.globalDataAll
+      const { userId, siteId } = this.$parent.globalData
+      const { newComerZoneCouponList, isReceived } = this
+      shtNewCustgetAllCouponHomepage(userId, grouponId, partnerId, siteId)
+      if (newComerZoneCouponList.length && !isReceived) {
+        wx.navigateTo({
+          url: `/pagesFeatures/newUsersMain/newUserSpecial?grouponId=${grouponId}&partnerId=${partnerId}&isClickReceiveCoupon=true&isReceiveCoupon=true`
+        })
+      } else {
+        wx.navigateTo({
+          url: `/pagesFeatures/newUsersMain/newUserSpecial?grouponId=${grouponId}&partnerId=${partnerId}&isClickReceiveCoupon=true`
+        })
+      }
+    },
+    gotoNewUserSpecial() {
+      const { grouponId, partnerId } = this.globalDataAll
+      wx.navigateTo({
+        url: `/pagesFeatures/newUsersMain/newUserSpecial?grouponId=${grouponId}&partnerId=${partnerId}&pointIndex=1`
+      })
+    },
+    async openCopyModal() {
+      if (this.copyContent) {
+        this.$hideTabBar()
+        this.copyModalState = true
+        return
+      }
+      const { grouponId, partnerId, userId } = this.globalDataAll
+      tip.loading()
+      const { content } = await getGroupCopyInfo(grouponId, partnerId)
+      this.$hideTabBar()
+      this.copyModalState = true
+      this.copyContent = content
+      tip.loaded()
+      clickCopyGroupon(userId, grouponId, partnerId)
+    },
+
+    closeCopyModal() {
+      this.copyModalState = false
+      this.$showTabBar()
+    },
+    closePopupModal() {
+      this.popupActivityInfo = null
+    },
+    secKillSelectTimeFn(e) {
+      const { userId, partnerId } = this.$parent.globalData
+      const { index, grouponid } = e.detail
+      this.secKillSelectTimeCurIndex = index
+      this.flashKillTabId = grouponid
+      clickFlashkilltab(
+        userId,
+        this.globalDataAll.grouponId,
+        partnerId,
+        grouponid
+      )
+      this.skillNum = index
+      this.secKillData = []
+      this.secKillList.map(seckill => {
+        if (~~grouponid === ~~seckill.grouponId) {
+          this.secKillData = seckill.merchandiseList
+          this.$apply()
+        }
+      })
+      this.$apply()
+    },
+    seckillMore(e) {
+      const { activeGrouponId } = e.detail || {}
+      const { grouponId, partnerId } = this.globalDataAll
+      return wx.navigateTo({
+        url: `/pages/group/seckillInfo?partnerId=${partnerId}&grouponId=${grouponId}&activeGrouponId=${activeGrouponId}`
+      })
+    },
+    seckillDetails(e) {
+      const { item, index } = e.detail
+      const { grouponId = 0, partnerId } = this.globalDataAll
+      const { userId } = this.$parent.globalData
+      const {
+        merchandiseId,
+        merchtypeid: merchtypeId,
+        grouponId: secKillGrouponId
+      } = item
+      clickShtFlash(
+        userId,
+        grouponId,
+        merchandiseId,
+        partnerId,
+        this.flashKillTabId,
+        index
+      )
+      wx.navigateTo({
+        url: `/pages/group/groupDetail?unshared=true&payOrderSource=${PAY_ORDER_SOURCE.SEC_KILL}&grouponId=${grouponId}&secKillGrouponId=${secKillGrouponId}&partnerId=${partnerId}&merchandiseId=${merchandiseId}&merchtypeId=${merchtypeId}`
+      })
+    },
+    seckillPay(e) {
+      let { item, index } = e.detail
+      const { grouponId } = item
+      let isseckill
+      this.secKillList.map(seckill => {
+        if (~~grouponId === ~~seckill.grouponId) {
+          isseckill = seckill.isseckill
+          this.$apply()
+        }
+      })
+      if (~~isseckill === 1) {
+        untils.showToast('不要太心急了，活动还没开始哦~')
+        return false
+      } else if (~~isseckill === 3) {
+        untils.showToast('活动已结束了，下次早点来吧~')
+        return false
+      } else if (~~isseckill === 2) {
+        item.isseckill = true
+        this.merchData = item
+        const {
+          userId,
+          grouponId: userGrouponId,
+          partnerId
+        } = this.globalDataAll
+        const { grouponId } = item
+        this.secKillList.map((seckill, index) => {
+          if (~~grouponId === ~~seckill.grouponId) {
+            this.activeStatus = this.secKillList[index].isseckill
+            this.$apply()
+          }
+        })
+        this.curMerchType = {}
+        this.goodsCount = 1
+        this.toBuyType = 0
+        clickShtFlashQuickBy(userId, userGrouponId, partnerId, grouponId, index)
+        setTimeout(() => {
+          this.getMerchtypeFn(
+            this.merchData.merchandiseId,
+            grouponId,
+            partnerId
+          )
+        }, 250)
+      }
+    },
+    commingSoonBtn() {
+      const { secKillSelectTimeCurIndex, secKillList } = this
+      if (secKillList[secKillSelectTimeCurIndex].title === '即将开始') {
+        this.commingSoon = true
+        setTimeout(() => {
+          this.commingSoon = false
+        }, 500)
+      }
+    },
+    subScribeBtn(e) {
+      const { grouponId, merchId, merchtypeId } = e.detail
+      const { partnerId } = this.globalDataAll
+      const templateId = SUBSCRIBE_MESSAGE_TEMPLATE.SKILL_NOTICE
+      wx.requestSubscribeMessage({
+        tmplIds: [templateId],
+        success: async res => {
+          if (res[templateId] === 'accept') {
+            const count = await secondkillSubscribe({
+              activityId: grouponId,
+              merchandiseId: merchId,
+              merchtypeId,
+              partnerId
+            })
+            this.$toast('秒杀开售前10分钟提醒您')
+            this.secKillList = this.secKillList.map(group => {
+              group.merchandiseList = group.merchandiseList.map(merch => {
+                if (
+                  group.grouponId == grouponId &&
+                  merch.merchandiseId == merchId
+                ) {
+                  merch.subscribeStatus = 1
+                  merch.subscribeCount = count
+                }
+                return merch
+              })
+              return group
+            })
+            this.$apply()
+          }
+        },
+        fail: () => {},
+        complete: () => {}
+      })
+    },
+    async cancelSubScribeBtn(e) {
+      const { grouponId, merchId } = e.detail
+      const count = await secondkillCancelSubscribe({
+        activityId: grouponId,
+        merchandiseId: merchId
+      })
+      this.$toast('提醒已取消，您可能抢不到哦~')
+      this.secKillList = this.secKillList.map(group => {
+        group.merchandiseList = group.merchandiseList.map(merch => {
+          if (group.grouponId == grouponId && merch.merchandiseId == merchId) {
+            merch.subscribeStatus = 0
+            merch.subscribeCount = count
+          }
+          return merch
+        })
+        return group
+      })
+    },
+    async copy() {
+      const { copyContent } = this
+      const { grouponId, partnerId, userId } = this.globalDataAll
+      await wepy.setClipboardData({ data: copyContent })
+      this.copyModalState = false
+      this.$showTabBar()
+      clickAllCopyBtn(userId, grouponId, partnerId)
+    },
+    openSharePopup() {
+      this.sharePopupState = true
+      this.$hideTabBar()
+    },
+    closeSharePopup(shareTarget) {
+      if (shareTarget != 'null') {
+        const { userId, grouponId, partnerId,siteId } = this.$parent.globalData
+        clickHomepageShare(userId, grouponId, partnerId, shareTarget,siteId)
+      }
+      this.sharePopupState = false
+      this.$showTabBar()
+    },
+    closeDownloadModal() {
+      this.downloadModalState = false
+      this.$showTabBar()
+    },
+
+    merchBindPlay(e) {
+      const { id, item } = e.currentTarget.dataset
+      if (item.soldout && item.quantity <= 0) return
+      const { videoContextPrev } = e.detail
+      this.vedioId = id
+      // stop all merch-view components video
+      const components = this.$wxpage.selectAllComponents('.merchVideo')
+      components.forEach(component => component.stop())
+      videoContextPrev.play()
+    },
+
+    merchBindended(event) {
+      this.vedioId = null
+    },
+    async merchAdd2Cart(event) {
+      let dataset = event.currentTarget.dataset
+      if (!dataset.item) {
+        dataset = event.detail.currentTarget.dataset
+      }
+      const { index, page, item } = dataset
+      if (item.saleType == 3) {
+        return wx.showToast({
+          title: `云保商品不支持添加购物车`,
+          icon: 'none',
+          duration: 2000
+        })
+      }
+      // valid
+      if (~~item.activityid === 580 && !item.isneworder) {
+        return wx.showToast({
+          title: `这个商品只可新人购买，看看别的吧`,
+          icon: 'none',
+          duration: 2000
+        })
+      } else {
+        this.merchData = item
+        this.merchData.isNewUserSpecial = true
+        const { num } = event.detail.currentTarget.dataset
+        if (
+          !this.merchData.isMoreMerchtype &&
+          this.merchData.cartTotalGoods + ~~num < 0
+        ) {
+          return false
+        }
+        this.pointIndex = (Number(page) - 1) * 20 + index + 1
+        this.detailPosi = event.detail.detail
+        const { grouponId, partnerId, userId } = this.globalDataAll
+        const { merchandiseid } = item
+        this.curMerchType = {}
+        this.goodsCount = ~~num
+        this.toBuyType = 1
+        await this.listMerchAdd2Cart(merchandiseid, grouponId, partnerId)
+        if (item.saleType == 1 || item.saleType == 3) {
+          homePageBuyNow({
+            grouponId,
+            userId,
+            merchandiseid,
+            categoryid: this.categoryId,
+            index: this.pointIndex
+          })
+        }
+      }
+    },
+    showHotSaleTip(event) {
+      const { item } = event.target.dataset
+      if (!item.hotSaleData || item.hotSaleData.activeStatus != 0) return
+      if (item.hotSaleData.timmer) {
+        untils.showToast('爆品将在倒计时结束后开抢！')
+      } else {
+        untils.showToast(
+          `爆品将于${item.hotSaleData.startDayStr} ${item.hotSaleData.hour}:${item.hotSaleData.minute} 开抢，请持续关注`
+        )
+      }
+    },
+    merchGoto(event) {
+      const { item, index, page } = event.target.dataset
+      const { grouponId, partnerId } = this.globalDataAll
+      const { userId, cityId } = this.$parent.globalData
+      const {
+        merchandiseid: merchandiseId,
+        merchtypeid: merchtypeId,
+        recommendYn,
+        isSupcon
+      } = item
+      const components = this.$wxpage.selectAllComponents('.merchVideo')
+      components.forEach(component => component.stop())
+      this.vedioId = null
+      if (~~recommendYn === 1) {
+        clickshtGoodsDetail(userId, grouponId, partnerId, cityId, merchandiseId)
+      }
+      clickIndexGoodsListToGoodsDetail(
+        userId,
+        grouponId,
+        partnerId,
+        merchandiseId,
+        this.categoryId,
+        (Number(page) - 1) * 20 + index + 1
+      )
+      wepy.navigateTo({
+        url: `/pages/group/groupDetail?unshared=true&payOrderSource=${PAY_ORDER_SOURCE.BUY}&grouponId=${grouponId}&partnerId=${partnerId}&merchandiseId=${merchandiseId}&merchtypeId=${merchtypeId}&isSupcon=${isSupcon}`
+      })
+    },
+    BannerListGotoBanner(e) {
+      const { finalImgUrl, bannerId, bannerName } = e.detail
+      const { userId, grouponId, partnerId } = this.$parent.globalData
+      wepy.navigateTo({
+        url: `/pages/banner/banner?landingUrl=${finalImgUrl}&bannerName=${bannerName}`
+      })
+      clickIndexBannerActive(userId, grouponId, partnerId, bannerId)
+    },
+    BannerListGotoCoupon(e) {
+      const { couponId, bannerName } = e.detail
+      const { userId, grouponId, partnerId } = this.$parent.globalData
+      wepy.navigateTo({
+        url: `/pages/getCoupon/getCoupon?couponid=${couponId}&bannerName=${bannerName}`
+      })
+      clickIndexBannertoCoupon(userId, grouponId, partnerId, couponId)
+    },
+    LeaderCardGotoNotice() {
+      wepy.navigateTo({ url: '/pages/messages/message' })
+    },
+    LeaderCardGotoChange() {
+      wepy.navigateTo({ url: '/pages/newUser/nearbyPartner' })
+    },
+    LeaderCardGotoSelect(e) {
+      let url = '/pages/search/searchIndex'
+      if (e.detail != '') url += `?afferentKeyword=${e.detail}`
+      wepy.navigateTo({ url })
+    },
+    LeaderCardGotoPopup() {
+      if (~~this.globalDataAll.rest !== 1) {
+        this.sharePopupState = true
+        this.$hideTabBar()
+      } else {
+        wepy.showToast({
+          title: `团长休息中，暂不能分享`,
+          icon: 'none',
+          duration: 2000
+        })
+      }
+      const shareTarget = 'customShare'
+      const { userId, grouponId, partnerId,siteId } = this.$parent.globalData
+      clickHomepageShare(userId, grouponId, partnerId,shareTarget, siteId)
+    },
+    LeaderCardTelphone() {
+      if (~~this.$parent.globalData.userType === 2) {
+        wx.showModal({
+          title: '提示',
+          content: '请登录后查看团长联系方式.',
+          confirmText: '登录',
+          cancelText: '取消',
+          success: res => {
+            const { confirm } = res
+            if (confirm) {
+              wepy.navigateTo({
+                url: '/pages/newUser/userAuthorize'
+              })
+            }
+          }
+        })
+        return
+      }
+      if (!this.leader.isDefaultPartner) {
+        this.phoneModaShow = true
+        return
+      }
+      if (this.$parent.globalData.monitoring.platform !== 'android') {
+        wx.makePhoneCall({
+          phoneNumber: this.leader.mobile
+        })
+        return
+      }
+      this.showActionsheet = true
+    },
+    actionsheetClick(e) {
+      wx.makePhoneCall({
+        phoneNumber: this.leader.mobile
+      })
+      this.showActionsheet = false
+    },
+    actionsheetClose() {
+      this.showActionsheet = false
+    },
+    ActivityTypeClick(e) {
+      const { specialId } = e.detail
+      wepy.navigateTo({
+        url: `/pages/classification/activityPage?specialId=${specialId}`
+      })
+    },
+    ActivityBookingClick(e) {
+      const { userId, grouponId, partnerId } = this.globalDataAll
+      wepy.navigateTo({ url: `/pagesGroupBook/groupBooking/list?grouponId=${ grouponId }&partnerId=${ partnerId }&fromWay=more` })
+    },
+    toGroupDetail(event) {
+      const { item, index } = event.detail
+      const { merchandiseId, merchTypeId, saleType } = item
+      const { grouponId, partnerId, userId } = this.globalDataAll
+      // - 埋点 begin
+      const pointIndex = Number(index) + 1
+      const { siteId } = this.$parent.globalData
+      toGroupBookingDetail(userId, grouponId, partnerId, siteId, merchandiseId, pointIndex, 'shtOpenPoolGoodsDetail', 'shtHomepage')
+      // - end
+      wx.navigateTo({
+        url: `/pagesGroupBook/groupBooking/detail?unshared=true&isSupcon=0&payOrderSource=${saleType}&grouponId=${grouponId}&partnerId=${partnerId}&merchandiseId=${merchandiseId}&merchtypeId=${merchTypeId}`
+      })
+    },
+    async gotoKingKongMerchList(e) {
+      const { item, index, idx } = e.detail
+      const {
+        kingkongId,
+        _soldout: soldout,
+        title: kingKongName,
+        kingkongType,
+        url
+      } = item
+      const { userId, grouponId, partnerId } = this.globalDataAll
+      const { siteId } = this.$parent.globalData
+      if (kingkongType == 2) {
+        if (url == '') {
+          return wx.showToast({ icon: 'none', title: '功能暂未上线，敬请期待' })
+        }
+        await shtkingkong(
+          kingkongId,
+          userId,
+          grouponId,
+          siteId,
+          partnerId,
+          index
+        )
+        toDiamondSubPage(
+          userId,
+          grouponId,
+          partnerId,
+          kingkongId,
+          2 * index + (idx + 1)
+        )
+        return wx.navigateTo({
+          url:
+            url === 'pages/loveInventory/specialPostal'
+              ? `/pagesFreeShipping/loveInventory/specialPostal`
+              : `/${url}`
+        })
+      } else {
+        wepy.$instance.globalData.newcomerTicketId = null
+        if (soldout === 1) {
+          return wepy.showToast({
+            title: `${kingKongName}的商品正在采购中`,
+            icon: 'none',
+            duration: 1000
+          })
+        }
+        toDiamondSubPage(
+          userId,
+          grouponId,
+          partnerId,
+          kingkongId,
+          2 * index + (idx + 1)
+        )
+        wepy.navigateTo({
+          url: `/pages/kingKong/kingKongMerchList?kingKongId=${kingkongId}`
+        })
+      }
+    },
+
+    gotoCategory(e) {
+      const { type, categoryId } = e.detail
+      if (type == 0 || type == 1) {
+        this.methods.SETTYPEDEFAULT({
+          typeDefault: categoryId
+        })
+        wepy.switchTab({
+          url: `/pages/classification/classification`
+        })
+      } else {
+        wepy.navigateTo({
+          url: `/pages/kingKong/kingKongMerchList?kingKongId=${categoryId}&special=true`
+        })
+      }
+    },
+
+    gotoDiamond(e) {
+      const { grouponId, userId } = this.globalDataAll
+      const {
+        diamondid,
+        secondcategoryid,
+        merchandiseid,
+        page,
+        index
+      } = e.detail.currentTarget.dataset
+      shtKingkongPageHotSale(
+        userId,
+        grouponId,
+        diamondid,
+        secondcategoryid,
+        merchandiseid,
+        (page - 1) * 20 + index + 1
+      )
+      wepy.navigateTo({
+        url: `/pages/kingKong/kingKongMerchList?kingKongId=${diamondid}&secondCategoryId=${secondcategoryid}`
+      })
+    },
+
+    secondKillRefresh() {
+      this.secondKillError = null
+      const { partnerId } = this.$parent.globalData
+      this.seKillList(partnerId)
+    },
+
+    merchListRefresh() {
+      this.loadAll.merchLoad = true
+      this.merchListError = null
+      this.fetchMerchList()
+    },
+
+    activityTypeRefresh() {
+      this.activityTypeError = null
+      this.$apply()
+      this.getAivityListFn(this.grouponId, this.specialId)
+    },
+
+    LeaderChangeCardConfirm() {
+      this.ifShowPartner = false
+      this.$parent.globalData.ifShowPartner = true
+      this.$parent.globalData.parentCityId = this.$parent.globalData.cityId
+      this.$parent.globalData._isPanterSended = false
+      this.$parent.globalData.showGroupMember = null
+      return wepy.reLaunch({
+        url: '/pages/group/groupList'
+      })
+    },
+    async LeaderChangeCardClose() {
+      setTimeout(() => {
+        // this.$parent.globalData.ifShowPartner = true
+        this.ifShowPartner = false
+        this.$apply()
+      }, 200)
+      // await updatePartnerHistory(this.$parent.globalData.partnerId)
+    },
+    LeaderDownAppConfirm() {
+      this.leadToDownLoadApp()
+    },
+    LeaderDownAppClose() {
+      wepy.setStorageSync('SHOW_DOWN_APP', true)
+      this.isShowDownLoadApp = false
+    },
+    LoginClose() {
+      this.$wxpage.setData({ newLogin: false })
+      this.$parent.globalData.isNewLogin = -1
+    },
+    LeaderChangeCardPhoneNum() {
+      this.$wxpage.setData({ newLogin: false })
+      this.$parent.globalData.isNewLogin = -1
+      this.isHasPhone = true
+      this.$parent.globalData.isHasPhone = true
+    },
+    // 切换团长
+    changeGroup() {
+      const { userType } = this.data.globalDataAll
+      if (userType === 4) {
+        this.switchShow = 1
+        this.$apply()
+      } else {
+        const { grouponId, userId } = this.data.globalDataAll
+        changePartner(grouponId, userId)
+        wx.navigateTo({
+          url: `/pages/newUser/switchLeader`
+        })
+      }
+    },
+    confirmSwitchGroup() {
+      this.partnerRestFn()
+      this.switchShow = 0
+      this.$apply()
+    },
+    cancleSwitchGroup() {
+      this.switchShow = 0
+      this.$apply()
+    },
+    async toTurnTable() {
+      let { jumpUrl, urlType } = this.drawPopupInfo
+      let url = jumpUrl
+      if(urlType == 1) {
+        let data = await getScoreLogin(jumpUrl)
+        url = data && data.redirect
+      }
+      if(url) {
+        wx.navigateTo({
+          url: `/pages/webView/webView?src=${encodeURIComponent(url)}`
+        })
+      }
+    },
+    // 2021-5-12 开团资质跳转
+    gotoAboutUs() {
+      wepy.navigateTo({
+        url: `/pages/mine/aboutUs`
+      })
+    }
+  }
+
+  // 开团
+  async partnerRestFn() {
+    await wepy.showLoading({
+      title: '加载中'
+    })
+    const { rest } = await partnerRest(0)
+    this.$parent.globalData.rest = rest
+    this.$apply()
+    wepy.hideLoading()
+    wepy.reLaunch({
+      url: '/pages/group/groupList'
+    })
+  }
+
+  detailFn(detail) {
+    const { animationTimmer1, animationTimmer2 } = this
+    if (animationTimmer1) clearInterval(animationTimmer1)
+    if (animationTimmer2) clearInterval(animationTimmer2)
+    detail.y = (this.screenHeight - detail.y + this.scrollTop) * 2 - 25
+    // detail.x = detail.x * 2 - 25
+    if (this.screenWidth <= 375) {
+      detail.x = detail.x * 2 - 25
+    } else {
+      detail.x = detail.x * 2 - 150
+    }
+    detail.paly = 1
+    this.detail = detail
+    this.$apply()
+  }
+  detailBottom() {
+    const {
+      detail: { y }
+    } = this
+    this.detail.x = 50
+    this.detail.y = y + 100
+    this.$apply()
+    this.animationTimmer1 = setTimeout(() => {
+      this.detail.paly = 2
+      this.detail.y = 60
+      this.$apply()
+    }, 300)
+    this.animationTimmer2 = setTimeout(() => {
+      this.detail.x = 0
+      this.detail.y = 0
+      this.detail.paly = 0
+      this.$apply()
+    }, 600)
+  }
+  updateNewUserCartCount() {
+    const { cartMap } = this
+    const { newUserMerchandiseList } = this.$wxpage.data
+    if (newUserMerchandiseList) {
+      const cartMapKeyArr = Object.keys(cartMap)
+      if (newUserMerchandiseList && newUserMerchandiseList.length) {
+        newUserMerchandiseList.forEach(merch => {
+          if (merch.isMoreMerchtype) {
+            let cartTotalGoods = 0
+            cartMapKeyArr.forEach(key => {
+              if (
+                (cartMap[key].merchandiseid || cartMap[key].merchandiseId) ==
+                merch.merchandiseid
+              ) {
+                cartTotalGoods += ~~cartMap[key].addNum
+              }
+            })
+            merch.cartTotalGoods = cartTotalGoods
+          } else {
+            const { isneworder, activityid } = merch
+            if (isneworder && ~~activityid && cartMap[merch.merchandiseid]) {
+              merch.cartTotalGoods = cartMap[merch.merchandiseid].addNum
+            } else if (cartMap[merch.merchtypeid]) {
+              merch.cartTotalGoods = cartMap[merch.merchtypeid].addNum
+            } else {
+              merch.cartTotalGoods = 0
+            }
+          }
+        })
+      }
+      this.$wxpage.setData({
+        newUserMerchandiseList
+      })
+    }
+  }
+  updateCartCount() {
+    const { cartMap } = this
+    const { merchList } = this.$wxpage.data
+    if (merchList) {
+      const cartMapKeyArr = Object.keys(cartMap)
+      if (merchList && merchList.length) {
+        let list = []
+        Object.values(merchList).forEach(value => {
+          list = list.concat(value)
+        })
+        if (list && list.length) {
+          list.forEach(merch => {
+            if (merch.isMoreMerchtype) {
+              let cartTotalGoods = 0
+              cartMapKeyArr.forEach(key => {
+                if (
+                  (cartMap[key].merchandiseid || cartMap[key].merchandiseId) ==
+                  merch.merchandiseid
+                ) {
+                  cartTotalGoods += ~~cartMap[key].addNum
+                }
+              })
+              merch.cartTotalGoods = cartTotalGoods
+            } else {
+              const { isneworder, activityid } = merch
+              if (isneworder && ~~activityid && cartMap[merch.merchandiseid]) {
+                merch.cartTotalGoods = cartMap[merch.merchandiseid].addNum
+              } else if (cartMap[merch.merchtypeid]) {
+                merch.cartTotalGoods = cartMap[merch.merchtypeid].addNum
+              } else {
+                merch.cartTotalGoods = 0
+              }
+            }
+          })
+        }
+      }
+      this.$wxpage.setData({
+        merchList
+      })
+    }
+  }
+  updateNewUserMerchListCartCount() {
+    const { newUserMerchandiseList } = this.$wxpage.data
+    if (newUserMerchandiseList) {
+      for (let j = 0; j < newUserMerchandiseList.length; j++) {
+        const merch = newUserMerchandiseList[j]
+        if (merch.isMoreMerchtype) {
+          if (merch.merchandiseid == this.merchData.merchandiseid) {
+            let cartTotalGoods = 0
+            Object.keys(this.cartMap).forEach(key => {
+              if (
+                (this.cartMap[key].merchandiseid ||
+                  this.cartMap[key].merchandiseId) == merch.merchandiseid
+              ) {
+                cartTotalGoods += ~~this.cartMap[key].addNum
+              }
+            })
+            merch.cartTotalGoods = cartTotalGoods
+            this.$wxpage.setData({
+              newUserMerchandiseList
+            })
+            break
+          }
+        } else if (merch.merchtypeid == this.merchData.merchtypeid) {
+          merch.cartTotalGoods += ~~this.goodsCount
+
+          this.$wxpage.setData({
+            newUserMerchandiseList
+          })
+          break
+        }
+      }
+    }
+  }
+  updateMerchListCartCount() {
+    // update list merch number
+    const { merchList } = this.$wxpage.data
+    if (merchList) {
+      for (let i = 0; i < Object.keys(merchList).length; i++) {
+        const arr = merchList[Object.keys(merchList)[i]]
+        for (let j = 0; j < arr.length; j++) {
+          const merch = arr[j]
+          if (merch.isMoreMerchtype) {
+            if (merch.merchandiseid == this.merchData.merchandiseid) {
+              let cartTotalGoods = 0
+              Object.keys(this.cartMap).forEach(key => {
+                if (
+                  (this.cartMap[key].merchandiseid ||
+                    this.cartMap[key].merchandiseId) == merch.merchandiseid
+                ) {
+                  cartTotalGoods += ~~this.cartMap[key].addNum
+                }
+              })
+              merch.cartTotalGoods = cartTotalGoods
+              // this.merchList = merchList
+              this.$wxpage.setData({
+                merchList
+              })
+              break
+            }
+          } else if (merch.merchtypeid == this.merchData.merchtypeid) {
+            merch.cartTotalGoods += ~~this.goodsCount
+            // this.merchList = merchList
+            this.$wxpage.setData({
+              merchList
+            })
+            break
+          }
+        }
+      }
+    }
+  }
+  events = {
+    'LeaderChangeCard:close'() {
+      setTimeout(() => {
+        this.$parent.globalData.modalShowDoubleIf = true
+        this.modalShowDoubleIf = false
+        this.$apply()
+      }, 200)
+      const globalData = this.$parent.globalData
+      const partnerId = globalData.defaultPartnerId
+      const grouponId = globalData.defaultGrouponId
+      const {userId, siteId} = this.$parent.globalData
+      clickShareModalBtnIndex(userId, grouponId, partnerId, siteId, this.trackLon, this.trackLat)
+      wepy.reLaunch({
+        url: `/pages/group/groupList?partnerId=${partnerId}&grouponId=${grouponId}`
+      })
+    },
+    async 'LeaderChangeCard:confirm'(item) {
+      setTimeout(() => {
+        this.$parent.globalData.modalShowDoubleIf = true
+        this.$parent.globalData.partnerId = this.options.partnerId
+        this.$parent.globalData.grouponId = this.options.grouponId
+        this.modalShowDoubleIf = false
+        // if (item != 'default') this.ifShowPartner = true
+        const { userId, grouponId, partnerId, siteId } = this.$parent.globalData
+        clickShareModalBtnIndex(userId, grouponId, partnerId, siteId, this.trackLon, this.trackLat)
+        this.$apply()
+      }, 200)
+
+      await updatePartnerHistory(this.$parent.globalData.partnerId)
+    },
+    async 'ModalCoupon:couponClose'() {
+      this.isCouponShow = false
+      this.$apply()
+    },
+    async 'ModalCoupon:clickUser'(item) {
+      console.log(item, decodeURIComponent(item.remark), '去使用')
+      const { tagid, merchandiseModeType } = item
+      const { grouponId, partnerId } = this.globalDataAll
+      const { merchandiseid: merchandiseId, merchtypeid: merchtypeId } = item
+      if (~~tagid === 0 || ~~tagid === 3) {
+        this.isCouponShow = false
+      } else if (~~tagid === 4) {
+        // 跳转详情页面
+        wepy.navigateTo({
+          url: `/pages/group/groupDetail?unshared=true&payOrderSource=${
+            PAY_ORDER_SOURCE.BUY
+          }&grouponId=${grouponId}&partnerId=${partnerId}&merchandiseId=${merchandiseId}&merchtypeId=${merchtypeId}&merchandiseModeType=${merchandiseModeType ||
+            ''}`
+        })
+      } else if (~~tagid === 5) {
+        // 天降红包根据二级品类获取金刚id
+        let levelcategory = item.remark && JSON.parse(decodeURIComponent(item.remark)).levelcategory
+        let secondCategoryId = levelcategory && levelcategory.split(',')[0]
+        try {
+          const data = await getKingKongList(partnerId, '1')
+          let { diamondInfo: kingKongList } = data
+          let newCategoryList = []
+          kingKongList.forEach(item => {
+            newCategoryList.push(...item.categoryList)
+          })
+          const selectItem = newCategoryList.filter(i => {
+            return secondCategoryId === i.categoryid
+          })
+          const kingKongId = selectItem[0].kingkongId
+          console.log(selectItem, secondCategoryId, kingKongId, 'kingkongId')
+          wepy.navigateTo({
+            url: `/pages/kingKong/kingKongMerchList?kingKongId=${kingKongId}&secondCategoryId=${secondCategoryId}`
+          })
+        } catch (error) {
+          console.log(error)
+        }
+      } else {
+        // 跳转分类页面
+        this.methods.SETTYPEDEFAULT({
+          typeDefault: tagid
+        })
+        wepy.switchTab({
+          url: `/pages/classification/classification`
+        })
+      }
+    },
+    'ModalCoupon:getPhoneNumber'() {
+      this.isHasPhone = true
+      this.$parent.globalData.isHasPhone = true
+      this.isCouponShow = false
+      this.$apply()
+    }
+  }
+  async onLoad(options) {
+    categoryTopRequestFlag = false
+    wx.setNavigationBarColor({
+      frontColor: '#ffffff',
+      backgroundColor: '#02C522'
+    })
+    this.notFinishedAddTip = wepy.getStorageSync('FINISHED_ADD')
+    this.options = null
+    this.isShopList = true
+    this.isMerchList = true
+    this.skillNum = 0
+    this.secKillSelectTimeCurIndex = 0
+    this.downloadModalState = false
+    options = this.handleActivityPage(options)
+    if (!this.options) this.options = options
+    // computed w & y
+    const { windowWidth, windowHeight, system } = await wepy.getSystemInfo()
+    // 判断机型
+    this.systemType = system.split(' ')[0]
+    this.x = windowWidth - 50
+    this.y = windowHeight - 50
+    this.windowHeight = windowHeight
+    // @TODO Fix me
+    // this.$data = getData()
+    this.loaded = false
+    this.secKillList = []
+    // entry page, auth first
+    try {
+      let authState = null
+      if (options) {
+        this.$parent.globalData.grouplistOption = options
+        authState = await auth(this.$parent.globalData, options)
+      } else {
+        authState = await auth(this.$parent.globalData, options)
+      }
+      if (options && options.scene) {
+        this.options = await filterOptions(options)
+      }
+      console.log('onload:', options, this.$parent.globalData.grouplistOption)
+      if (!authState) return
+    } catch (err) {
+      console.log(err)
+    }
+    const globalData = this.$parent.globalData
+    let {
+      userId,
+      grouponId,
+      partnerId,
+      defaultPartnerId,
+      modalShowDoubleIf,
+      userIsOld,
+      close,
+      userIsPartner,
+      showGroupMember,
+      rest,
+      userType,
+      userIsLogoff,
+      pendingArroval,
+      monitoring: { statusBarHeight, version, platform },
+      newStyle,
+      siteId,
+      cityId
+    } = globalData
+
+    this.searchDemote = globalData.searchDemote
+    // Cancel user audit
+    if (userIsLogoff == 0) {
+      wepy.reLaunch({ url: `/pages/error?logOff=1` })
+      return false
+    }
+    this.supportCustomTabBar = this.$parent.globalData.supportCustomTabBar
+    this.globalDataAll.pendingArroval = pendingArroval
+    this.$apply()
+    this.globalDataAll.userIsOld = userIsOld
+    this.globalDataAll.close = close
+    this.globalDataAll.userIsPartner = userIsPartner
+    this.globalDataAll.grouponId = grouponId
+    this.globalDataAll.partnerId = partnerId
+    this.globalDataAll.showGroupMember = showGroupMember
+    this.globalDataAll.rest = rest
+    this.globalDataAll.userType = userType
+    this.globalDataAll.userId = userId
+    this.statusBarHeight = statusBarHeight
+    this.version = Number(version.split('.')[0])
+    this.platform = platform
+    this.defaultPartnerId = defaultPartnerId
+    this.newStyle = newStyle
+    if (this.options && this.options.isShare) {
+      modalShowDoubleIf = false
+    }
+    // 埋点
+    if (this.options && this.options.shareUserId) {
+      let offsource = this.options.offsource ? this.options.offsource : 'none'
+      let plat = this.options.plat ? this.options.plat : 'wxapp'
+      entryGroupList(userId, this.options.shareUserId, grouponId, partnerId, siteId, offsource, plat)
+      if (globalData.isFromCode && globalData.isFromCode === 1) {
+        // 扫描小程序码进入小程序
+        scanCodeToIndex(userId, this.options.shareUserId, grouponId, partnerId, siteId, plat)
+      }
+    }
+    //  扫描小程序码进入小程序
+    if(options && options.scene){
+      let plat = options.plat ? options.plat : 'wxapp'
+      scanCodeToIndex(userId, this.options.shareUserId, grouponId, partnerId, siteId, plat)
+    }
+    // 新用户没有团长
+    if (!userIsPartner && !defaultPartnerId && userType == 2) {
+      await updatePartnerHistory(this.$parent.globalData.partnerId)
+      await updateBPid(this.$parent.globalData.partnerId)
+    } else if (
+      !userIsPartner &&
+      defaultPartnerId != partnerId &&
+      userType != 3
+    ) {
+      // NOTE：分享场景下：只有团员身份才会显示切换团长弹窗
+      if (!modalShowDoubleIf) {
+        this.modalShowDoubleIf = true
+        this.getUserLastlocationFn() // 分享弹框显示的时候上报用户的节点
+        this.getUserToPartnerLocationFn(partnerId) // 分享团长信息
+        this.getUserToPartnerLocationFn(defaultPartnerId, true) // 默认团长信息
+      }
+    }
+    // get partner info
+    if (partnerId) {
+      if (~~defaultPartnerId !== ~~partnerId || this.pullDownRefresh) {
+        this.getPatnerFn(grouponId, partnerId)
+      }
+    }
+    // banner list
+    this.getBannerListFn()
+    // sekill list
+    this.seKillList(partnerId)
+    if (grouponId == 0) grouponId = null // eslint-disable-line
+    if (grouponId) {
+      // this.getSkyCheckFn(grouponId)
+      const { parentCityId, siteId } = this.$parent.globalData
+      await this.popupActivity(parentCityId, siteId)
+      this.getAivityListFn()
+      this.getAivityBookingListFn()
+      // this.getGroupCategoryListFn()
+      this.getKingKongListFn()
+      this.fetchMerchList()
+      this.getHotList()
+      this.fetchDrawPopup(userId, partnerId, cityId)
+    } else {
+      this.loadAll = {
+        leaderLoad: false,
+        bannerLoad: false,
+        secKillLoad: false,
+        merchLoad: false
+      }
+      this.$apply()
+    }
+    // get group join list
+    // @TODO Fixed me
+    this.loaded = true
+    // swiper topt
+    this.$apply()
+    this.onShow()
+  }
+  async onShow() {
+    this.checkIfShowDownLoadApp()
+    this.$tabBarRefresh()
+    const components = this.$wxpage.selectAllComponents('.merchVideo')
+    components.forEach(component => component.stop())
+    this.vedioId = null
+    const {
+      windowWidth: screenWidth,
+      windowHeight: screentHeight
+    } = wepy.getSystemInfoSync()
+    this.screenHeight = screentHeight
+    this.screenWidth = screenWidth
+    this.$parent.globalData._isPanterSended = false
+    if (!this.loaded || !wepy.getStorageSync('TOKEN')) return
+    if (this.$parent.globalData._pathChangeByShare) {
+      this.$parent.globalData._pathChangeByShare = false
+      const { partnerId, grouponId } = this.globalDataAll
+      const { userId, shareUserId } = this.$parent.globalData
+      entryGroupList(userId, shareUserId, grouponId, partnerId)
+      this.merchList = {}
+      this.$apply()
+      console.log(
+        'onshow:',
+        this.options,
+        this.$parent.globalData.grouplistOption
+      )
+      if (this.options && !partnerId) {
+        return this.onLoad(this.options)
+      }
+    }
+    const { partnerId, grouponId } = this.globalDataAll
+    const {
+      couponIds,
+      status,
+      received,
+      newcomerZoneId,
+      maxNum,
+      isNewUser
+    } = await newcomerActivity(partnerId)
+    const { newStyle } = this.$parent.globalData
+    this.maxNum = maxNum
+    this.isReceived = received
+    this.couponIds = couponIds
+    this.isShowNewuserActivity = status
+    this.newcomerZoneId = newcomerZoneId
+    this.isNewUser = isNewUser
+    this.newStyle = newStyle
+    this.setData({
+      isShowNewuserActivity: status || false,
+      isNewUser: isNewUser || null,
+    })
+    const [page, size, source] = [1, 100, 1]
+    const {
+      grouponMerchandiseList,
+      newComerZoneCouponList
+    } = await newcomerZone(grouponId, partnerId, couponIds, page, size, source)
+    this.newComerZoneCouponList = newComerZoneCouponList
+    this.newUserMerchandiseList = grouponMerchandiseList
+    let globalDataAll = this.globalDataAll
+    if(status && ((isNewUser == 1 && (newComerZoneCouponList.length || grouponMerchandiseList.length)) || (isNewUser == 0 && (globalDataAll.userIsPartner || globalDataAll.userType == 3)))) {
+      this._isShowNewuserActivity = true
+    }
+    const couponTotal = []
+    this.newComerZoneCouponList.map(item => {
+      couponTotal.push(item.money)
+    })
+    if (this.newComerZoneCouponList.length) {
+      this.couponSum = couponTotal.reduce((prev, next) => ~~prev + ~~next)
+    }
+    const { starttime, defaultPartnerId } = this.$parent.globalData
+    // get partner fans number
+    if (~~defaultPartnerId !== ~~partnerId || this.pullDownRefresh) {
+      this.getBackActivityFn(partnerId, grouponId)
+      this.joinList = []
+      if (grouponId) {
+        try {
+          const {
+            fansTotal: fansCount,
+            nickname,
+            title,
+            residentialname,
+            shareImageUrl: imageUrl
+          } = await getIndexPartnerInfo(grouponId, partnerId)
+          this.fansCount = fansCount
+          this.shareInfo = {
+            nickname,
+            title,
+            address: residentialname,
+            imageUrl
+          }
+          if (!this.$parent.globalData.indexOffYn) {
+            const data = await getLatesBuyersOrderList(grouponId)
+            this.joinList = data
+          }
+        } catch (error) {}
+      }
+    }
+    // cart Count
+    try {
+      const { totalCount, merchTypeList } = await getQueryCartNum(
+        grouponId,
+        partnerId
+      )
+      if (totalCount) {
+        this.cartTotalCount = totalCount
+        this.cartMap = {}
+        this.$setTabBarBadge({ index: 3, text: `${totalCount}` })
+        merchTypeList.map(item => {
+          const { merchtypeid } = item
+          this.cartMap[merchtypeid] = item
+        })
+        this.getCartStore(totalCount, this.cartMap)
+      } else {
+        this.cartTotalCount = totalCount
+        this.getCartStore(totalCount, {})
+        this.$removeTabBarBadge({ index: 3 })
+      }
+    } catch (error) {}
+
+    if (!this.once && starttime) {
+      const { grouponId, partnerId } = this.globalDataAll
+      const { userId, cityId } = this.$parent.globalData
+      const monitoring = this.$parent.globalData.monitoring
+      const timelong = Date.now() - monitoring.starttime
+      monitoring.timelong = timelong
+      const startinfo = `${monitoring.brand}_${monitoring.model}_${monitoring.version}_${monitoring.system}_${monitoring.platform}_${monitoring.sdkversion}_${monitoring.benchmarklevel}_${monitoring.starttime}_${monitoring.timelong}_${monitoring.scene}`
+      this.once = true
+      await getMonitoring(userId, grouponId, partnerId, cityId, startinfo)
+    }
+    this.isUserCheck()
+    this.updateCartCount()
+    this.updateNewUserCartCount()
+    this.$apply()
+  }
+  // 下单返券入口
+  async getBackActivityFn (partnerId, grouponId) {
+    try {
+      const { newComerZoneCouponList, newUserMerchandiseList, newStyle } = this
+      const { judgeJoin, activityImgUrl, endDate, isNew, isMultiPlan, presentDate, startNum, discountAmount, numberCoupon, copyWriting } = await getBackActivity(partnerId, grouponId)
+      this.isShowCashbackBanner = judgeJoin
+      this.startNum = parseFloat(startNum)
+      this.discountAmount = parseFloat(discountAmount)
+      this.numberCoupon = numberCoupon
+      this.copyWriting = copyWriting
+      this.cashbackSystemTime = presentDate
+      this.cashbackEndTime = endDate
+      this.isNew = isNew
+      this.isMultiPlan = isMultiPlan
+      if (isNew && (newUserMerchandiseList.length === 0 && newComerZoneCouponList.length === 0 || !this.isShowNewuserActivity)) {
+        if (newStyle)
+          this.activityImgUrl = 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/v3-new-user-header-simple-newstyle1.png'
+        else
+          this.activityImgUrl = 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/v3-new-user-header-simple.png'
+      } else if (isNew) {
+        if (newStyle)
+          this.activityImgUrl = 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/v3-new-user-header-newstyle.png'
+        else
+          this.activityImgUrl = 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/v3-new-user-header.png'
+      } else {
+        this.activityImgUrl = activityImgUrl
+      }
+      this.$apply()
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  async getPatnerFn(grouponId, partnerId, getOriginLeader) {
+    // 获取团长信息
+    const {
+      avatar,
+      nickname,
+      isDefaultPartner,
+      residentialname,
+      title,
+      mobile = '',
+      phoneShow,
+      fansTotal: fansCount,
+      shareImageUrl: imageUrl
+    } = await getIndexPartnerInfo(grouponId, partnerId)
+    console.log(
+      'nickname:',
+      nickname,
+      'isDefaultPartner:',
+      isDefaultPartner,
+      'phoneShow:',
+      phoneShow,
+      'mobile:',
+      mobile,
+      'partnerId:',
+      partnerId
+    )
+    const mobileDisplay =
+      mobile.slice(0, 3) + '-' + mobile.slice(3, 7) + '-' + mobile.slice(7)
+    this.leader = {
+      avatar,
+      nickname,
+      district: residentialname,
+      slogan: title,
+      mobile,
+      mobileDisplay,
+      phoneShow,
+      isDefaultPartner
+    }
+    this.loadAll.leaderLoad = false
+    this.fansCount = fansCount
+    this.shareInfo = { nickname, title, address: residentialname, imageUrl }
+    this.$apply()
+  }
+  async getUserToPartnerLocationFn(partnerId, getOriginLeader) {
+    const { latitude, longitude } = await wepy.getLocation({ type: 'wgs84' })
+    const res = await getUserToPartnerLocation(latitude, longitude, partnerId)
+    // 是否需要当前用户本身团长的信息
+    if (getOriginLeader) {
+      this.originLeader = res
+    } else {
+      this.sharedLeader = res
+      this.sharedLeader.partnerId = partnerId
+      this.sharedLeader.grouponId = this.globalDataAll.grouponId
+      if (!this.defaultPartnerId) {
+        this.methods.ORIGINLEADER({
+          originLeader: this.sharedLeader
+        })
+      }
+    }
+  }
+  async getBannerListFn() {
+    try {
+      const bannerList = await getBannerList(this.globalDataAll.partnerId)
+      this.bannerList = bannerList
+      this.loadAll.bannerLoad = false
+      this.$apply()
+    } catch (error) {
+      this.bannerList = []
+      this.loadAll.bannerLoad = false
+    }
+  }
+  async popupActivity(cityId, siteId) {
+    await this.getSkyCheckFn(this.grouponId)
+    try {
+      let popupActivityInfo = await popupActivity(cityId, siteId)
+      if (!popupActivityInfo.activityId) {
+        popupActivityInfo = null
+      } else {
+        // - 弹屏埋点 begin
+        const { userId, grouponId, partnerId } = this.globalDataAll
+        popupModalInitTrack(userId, grouponId, partnerId, siteId, popupActivityInfo.activityId, 'homepage')
+        // - end
+      }
+      this.popupActivityInfo = popupActivityInfo
+      this.$apply()
+    } catch (err) {}
+  }
+  async getSkyCheckFn(grouponId) {
+    const { parentCityId, siteId } = this.$parent.globalData
+    try {
+      let { hasSky, packetImg, colors } = await getSkyCheck(
+        parentCityId,
+        siteId,
+        grouponId
+      )
+      colors = colors && JSON.parse(colors)
+      if (packetImg) this.packetImg = packetImg
+      if (colors && colors.bottomColor) this.bottomColor = `#${colors.bottomColor}`
+      if (colors && colors.backgroundColor) {
+        let bgColor = colors.backgroundColor
+        let bgColorArr = bgColor.includes('#') ? bgColor.split('#') : []
+        let newBgColor = bgColorArr.map(item=>{
+          return `#${item}`
+        })
+        this.bgColor = bgColorArr.length > 1 ? newBgColor : `#${bgColor}, #${bgColor}`
+      } else {
+        this.bgColor = `${this.bgColor}, ${this.bgColor}`
+      }
+      if (hasSky) {
+        const data = await getSkyReceives(grouponId)
+        if (data && data.length > 0) {
+          this.isCouponShow = true
+          const list = untils.setCouponDate(data)
+          this.couponList = list
+        }
+        this.$apply()
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  async fetchDrawPopup(userId, partnerId, cityId) {
+    let data = await getDrawPopup(userId, partnerId, cityId)
+    this.drawPopupInfo = data
+    this.$apply()
+  }
+  async getAivityListFn() {
+    const { grouponId, partnerId } = this.globalDataAll
+    try {
+      const activityList = await setListActivity(grouponId, partnerId)
+      activityList.map(res => {
+        res.isImageView = false
+      })
+      this.activityList = activityList
+      this.$apply()
+    } catch (error) {
+      console.log(error)
+      this.activityTypeError = error
+      this.$apply()
+    }
+  }
+  async getAivityBookingListFn () {
+    const { grouponId, partnerId } = this.globalDataAll
+    try {
+      const activityBooking = await bookingDaily(grouponId, partnerId)
+      this.activityBooking = activityBooking
+      this.activityBooking.showAvatarList && this.activityBooking.showAvatarList.length > 5 &&
+      (this.activityBooking.showAvatarList = this.getRandomArrayElements(this.activityBooking.showAvatarList, 5))
+      this.$apply()
+    } catch (error) {
+      console.log(error)
+      this.activityTypeError = error
+      this.$apply()
+    }
+  }
+  getRandomArrayElements(arr, count) { // 随机取五个头像
+    let shuffled = arr.slice(0), i = arr.length, min = i - count, temp, index
+    while (i-- > min) {
+      index = Math.floor((i + 1) * Math.random())
+      temp = shuffled[index]
+      shuffled[index] = shuffled[i]
+      shuffled[i] = temp
+    }
+    return shuffled.slice(min)
+  }
+  async getGroupCategoryListFn () {
+    const { grouponId, partnerId, userIsPartner } = this.globalDataAll
+    this.paging = {
+      page: 1,
+      limit: 20,
+      loading: true,
+      finished: false
+    }
+    this.merchList = {}
+    const categoryList = await getGroupCategoryList(
+      grouponId,
+      partnerId,
+      userIsPartner
+    )
+    if (!this.ifCategoryId(categoryList)) {
+      this.categoryId = 0
+    }
+    this.categoryList = categoryList
+    this.$apply()
+  }
+  async getKingKongListFn() {
+    const { partnerId, grouponId, userId } = this.globalDataAll
+    try {
+      const data = await getKingKongList(partnerId, '1')
+      if (data.length === 0) {
+        this.kingKongList = []
+        this.$apply()
+      }
+      let { diamondInfo: kingKongList } = data
+
+      if (!this.$parent.globalData.indexOffYn) {
+        const { listCategoryResults } = await getKingKongStatus(
+          grouponId,
+          partnerId
+        )
+        kingKongList = kingKongList.map((v, i) => {
+          v._soldout = listCategoryResults[i]
+            ? listCategoryResults[i].soldout
+            : 0
+          return v
+        })
+      }
+      if (kingKongList.length >= 5) {
+        this.kingkongTwo = true
+        kingKongList = chunk(kingKongList, 2)
+      }
+      this.kingKongList = kingKongList
+      if (kingKongList.length) {
+        indexDiamondShow(userId, grouponId, partnerId)
+      }
+      this.$apply()
+      if (!this.cateTopHeight) this.getAllPageHeight()
+      // eslint-disable-next-line
+      function chunk(array, size) {
+        if (array.length >= 10) {
+          return Array.from(
+            { length: Math.ceil(array.length / size) },
+            (v, i) => {
+              if (i > 4) {
+                return array.slice(i * size, i * size + size)
+              } else {
+                const arr = []
+                arr.push(array[i], array[i + 5])
+                return arr
+              }
+            }
+          )
+        } else {
+          const num = array.length - 5
+          return Array.from({ length: 5 }, (v, i) => {
+            const arr = []
+            if (num > i) {
+              arr.push(array[i], array[i + 5])
+            } else {
+              arr.push(array[i])
+            }
+            return arr
+          })
+        }
+      }
+    } catch (error) {
+      // ignore 金刚请求失败
+    }
+  }
+  async getHotList() {
+    if (!this.$parent.globalData.indexOffYn && !this.$parent.globalData.searchDemote) {
+      const data = await getKeywordGroup(this.globalDataAll.grouponId)
+      if (data.length == 0) {
+        this.hotList = [{ keyword: null }]
+      } else {
+        this.hotList = data
+      }
+    }
+  }
+  async onPullDownRefresh() {
+    this.secondKillError = null
+    this.merchListError = null
+    this.$parent.globalData.rest = null
+    this.$parent.globalData._isPanterSended = false
+    wepy.showNavigationBarLoading()
+    this.skillNum = 0
+    this.isMerchList = true
+    this.merchListError = null
+    this.timestamp = Date.now()
+    this.merchList = {}
+    this.activityList = []
+    this.sharePopupState = false
+    this.options.isShare = false
+    this.$showTabBar()
+    this.loadAll = {
+      leaderLoad: false,
+      bannerLoad: true,
+      secKillLoad: true,
+      merchLoad: true
+    }
+    this.paging = {
+      page: 1,
+      limit: 20,
+      loading: true,
+      finished: false
+    }
+    this.$apply()
+    await this.onLoad(this.options)
+    wepy.hideNavigationBarLoading()
+    wepy.stopPullDownRefresh()
+  }
+  onPageScroll = throttle(e => {
+    let drawPopupInfo = this.drawPopupInfo
+    if(drawPopupInfo && (drawPopupInfo.canPopUp == 1)) {
+      if(this.anminaterStyle != 'anminater-hide')
+        this.anminaterStyle = 'anminater-hide'
+      if(anminaterTimer) clearTimeout(anminaterTimer)
+      anminaterTimer = setTimeout(() => {
+        this.anminaterStyle = 'anminater-show'
+      }, 600)
+      this.$apply()
+    }
+    if (!categoryTopRequestFlag) {
+      categoryTopRequestFlag = true
+      const { grouponId, partnerId, userIsPartner } = this.$parent.globalData
+      if (grouponId) {
+        this.getCategoryTopFn(partnerId, grouponId, userIsPartner)
+      }
+    }
+    this.scrollTop = e.scrollTop
+    if (this.merchListError) return
+    const { cartTotalCount, cateTopHeight } = this
+    if (e.scrollTop > cateTopHeight) {
+      this.$wxpage.setData({ showCategory: true })
+    } else {
+      this.$wxpage.setData({ showCategory: false })
+    }
+    let homeTab = {}
+    if (parseInt(this.windowHeight / 2) <= parseInt(e.scrollTop / 2)) {
+      homeTab = {
+        name: 'home',
+        index: 0,
+        text: '回顶部',
+        iconPath: '/statics/shouye-weixuanzhong@2x.png',
+        selectedIconPath:
+          'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/v2-group-topping.png'
+      }
+    } else {
+      homeTab = {
+        name: 'home',
+        index: 0,
+        text: '首页',
+        iconPath: '/statics/shouye-weixuanzhong@2x.png',
+        selectedIconPath: '/statics/shouye-xuanzhong@2x.png'
+      }
+    }
+    this.$setTabBarItem(homeTab)
+    if (~~cartTotalCount > 0) {
+      this.$setTabBarBadge({ index: 3, text: `${this.cartTotalCount}` })
+    }
+  }, 500)
+
+  // 加车判断商品类型
+  ifCategoryId(categoryList) {
+    if (~~this.categoryId !== 0) {
+      for (let i = 0; i < categoryList.length; i++) {
+        const item = categoryList[i]
+        if (~~item.categoryId === ~~this.categoryId) {
+          return true
+        }
+      }
+    }
+    return false
+  }
+  async getAllPageHeight() {
+    const { statusBarHeight, platform } = this.$parent.globalData.monitoring
+    let status = statusBarHeight
+    if (platform == 'android') {
+      status += 49
+    } else {
+      status += 45
+    }
+    const query = await wx.createSelectorQuery()
+    if (this.kingKongList.length > 0) {
+      query
+        .select('.king-kong')
+        .boundingClientRect(res => {
+          if (res) {
+            if (
+              this.cateTopHeight === undefined ||
+              this.cateTopHeight === null
+            ) {
+              this.cateTopHeight = res.top + 43 - status
+            }
+          }
+        })
+        .exec()
+    } else {
+      this.cateTopHeight = 64
+    }
+    this.$apply()
+  }
+
+  onHide() {
+    const components = this.$wxpage.selectAllComponents('.merchVideo')
+    components.forEach(component => component.stop())
+    this.vedioId = null
+    let selectedIconPath
+    let text
+    let iconPath = '/statics/shouye-weixuanzhong@2x.png'
+    if (this.isSetTabBarItem) {
+      selectedIconPath =
+        'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/v2-group-topping.png'
+      text = '回顶部'
+    } else {
+      selectedIconPath = '/statics/shouye-xuanzhong@2x.png'
+      text = '首页'
+    }
+    this.$setTabBarItem({
+      name: 'home',
+      index: 0,
+      text: text,
+      iconPath: iconPath,
+      selectedIconPath: selectedIconPath
+    })
+    this.isHide = true
+  }
+
+  onShareAppMessage(res) {
+    this.$showTabBar()
+    this.setData({ sharePopupState: false })
+    const {
+      shareInfo,
+      globalDataAll: { grouponId, partnerId }
+    } = this
+    const { userIsPartner, userId, siteId } = this.$parent.globalData
+    let shareAddress = ''
+    let shareNickName = ''
+    let shareInfoTitle = ''
+    let shareImageUrl = ''
+    if (res.from === 'menu') {
+      const shareTarget = 'wxfriendSys'
+      clickHomepageShare(userId, grouponId, partnerId,shareTarget, siteId)
+    }
+    if (shareInfo) {
+      if (shareInfo.address !== null && shareInfo.address !== undefined) {
+        shareAddress = shareInfo.address
+      }
+      if (shareInfo.nickname !== null && shareInfo.nickname !== undefined) {
+        shareNickName = shareInfo.nickname
+      }
+      shareInfoTitle = shareInfo.title
+      shareImageUrl = shareInfo.imageUrl
+    }
+    if (this.isCouponShow) {
+      return {
+        title: `快来领！我领到了${this.couponList.length}张优惠券，你也来试试~`,
+        path: `/pages/group/groupList?grouponId=${grouponId}&partnerId=${partnerId}&shareUserId=${userId}&isShare=true`,
+        imageUrl:
+          'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/group_skyHongbao.png'
+      }
+    }
+    const title = userIsPartner
+      ? `我在${shareAddress}开团～${shareInfoTitle}`
+      : `邀请你一起参与${shareNickName}发起的${shareAddress}团购`
+    console.log(
+      `/pages/group/groupList?grouponId=${grouponId}&partnerId=${partnerId}&shareUserId=${userId}&isShare=true`
+    )
+    // this.$apply()
+    return {
+      title,
+      path: `/pages/group/groupList?grouponId=${grouponId}&partnerId=${partnerId}&shareUserId=${userId}&isShare=true`,
+      imageUrl: shareImageUrl
+    }
+  }
+
+  async fetchMerchList() {
+    try {
+      const {
+        categoryId,
+        globalDataAll: { grouponId, partnerId }
+      } = this
+      const { page, limit, finished } = this.paging
+      if (finished) return
+      const {
+        groupontype,
+        starttime,
+        endtime,
+        systemTime,
+        deliverDate,
+        grouponMerchandiseList: merchList
+      } = await getGroupMerchList(categoryId, grouponId, partnerId, page, limit)
+      if (!merchList) return
+      merchList.map(res => {
+        res.isImageView = false
+        res.systemTime = systemTime
+        res.endTime = endtime
+        res = this._computedHotSaleData(res)
+        res = this._computedMerchImage(res)
+      })
+      if (groupontype) {
+        this.groupontype = groupontype
+        this.$parent.globalData.groupontype = groupontype
+      }
+      if (deliverDate) {
+        const deDate = new Date(deliverDate)
+        const _deDate = new Date()
+        _deDate.setHours(0)
+        _deDate.setMinutes(0)
+        _deDate.setSeconds(0)
+        _deDate.setMilliseconds(0)
+        const hours = (deDate.getTime() - _deDate.getTime()) / 3600000
+        let _deliverDate = ''
+        if (hours > 0 && hours < 24) {
+          _deliverDate = '今天'
+        } else if (hours >= 24 && hours < 48) {
+          _deliverDate = '明天'
+        } else if (hours >= 48 && hours < 72) {
+          _deliverDate = '后天'
+        } else if (hours >= 72) {
+          _deliverDate = `${deDate.getMonth() + 1}月${deDate.getDate()}日`
+        }
+        this.getDeliverDate = `${_deliverDate}自提`
+      }
+      this.filterEndTime(endtime)
+      // compute seconds
+      const regexp = /-/g
+      const start = new Date(starttime.replace(regexp, '/')).getTime()
+      const now = new Date(systemTime.replace(regexp, '/')).getTime()
+      const end = new Date(endtime.replace(regexp, '/')).getTime()
+
+      if (!this.grouponStartTime) {
+        this.methods.GETGROUPONTIME({
+          grouponStartTime: starttime.replace(regexp, '/'),
+          grouponEndTime: endtime.replace(regexp, '/')
+        })
+      }
+      let seconds
+
+      if (start > now) {
+        seconds = ~~((start - now) / 1000 > 0 ? (start - now) / 1000 : 0)
+        this.timeState = 0
+      } else {
+        if (now <= end) {
+          seconds = ~~((end - now) / 1000 > 0 ? (end - now) / 1000 : 0)
+          this.timeState = 1
+        } else {
+          seconds = 0
+          this.timeState = 2
+        }
+      }
+      this.seconds = seconds
+      this.formatCountdown._diff = seconds
+
+      this.countdown(end, start)
+      if (page === 1) {
+        this.merchList = {}
+        this.$apply()
+        this.loadAll.merchLoad = false
+      }
+      this.paging.finished = merchList.length < 20
+
+      this.$wxpage.setData({
+        [`merchList[${page}]`]: merchList
+      })
+
+      this.$apply()
+    } catch (error) {
+      this.merchListError = error
+    } finally {
+      this.loadAll.merchLoad = false
+      this.$apply()
+    }
+  }
+
+  filterEndTime(endtime) {
+    const endTimeDate = endtime.split(' ')[0]
+    const getDate = +new Date(endTimeDate)
+    const setDate = getDate + 86400000
+    const endDate = new Date(setDate)
+    let hour = endDate.getFullYear()
+    let min = endDate.getMonth() + 1
+    let sec = endDate.getDate()
+    hour = hour < 10 ? '0' + hour : hour
+    min = min < 10 ? '0' + min : min
+    sec = sec < 10 ? '0' + sec : sec
+    this.grouponEndTime = `${hour}/${min}/${sec}`
+    this.$apply()
+  }
+
+  async getCategoryTopFn(partnerId, grouponId, userIsPartner) {
+    const data = await getCategoryTop(partnerId, grouponId, userIsPartner)
+    this.$wxpage.setData({ categoryTopList: data })
+  }
+
+  countdown(end, start) {
+    clearInterval(stopWatch)
+    stopWatch = setInterval(() => {
+      if (untils.calcuTime(this.formatCountdown) < 0) {
+        if (this.timeState === 0) {
+          this.formatCountdown._diff = ~~((end - start) / 1000 > 0
+            ? (end - start) / 1000
+            : 0)
+          this.timeState = 1
+          if (untils.calcuTime(this.formatCountdown) < 0) {
+            clearInterval(stopWatch)
+          }
+        } else {
+          this.formatCountdown._diff = 0
+          this.timeState = 2
+          clearInterval(stopWatch)
+        }
+      }
+      this.$apply()
+    }, 1000)
+  }
+
+  onReachBottom() {
+    const { userId, grouponId, partnerId } = this.globalDataAll
+    const { page, finished } = this.paging
+    this.paging = { page: page + 1, loading: true, finished, limit: 20 }
+    if (finished) return
+    this.fetchMerchList()
+    allGoodsMoveToBottom(
+      userId,
+      grouponId,
+      partnerId,
+      'homepagecategory',
+      this.categoryId
+    )
+  }
+  pad(str) {
+    str = String(str)
+    return str[1] ? str : `0${str}`
+  }
+  // get seckill data
+  async seKillList(partnerId) {
+    try {
+      const secKillList = await getSecKillList(partnerId)
+      if (secKillList.length) {
+        const regexp = /-/g
+        const sysTime = new Date(
+          secKillList[0].systemTime.replace(regexp, '/')
+        ).getTime()
+        const allSecKillList = this.secKilllistFn(secKillList, sysTime)
+        this.secKillList = await allSecKillList.slice(0, 3)
+
+        // format
+        this.secKillList = this.secKillList.map(item => {
+          item.title = formatSeckillStatus(
+            item.systemTime,
+            item.startTime,
+            item.endTime
+          )
+          item.dayTitle = formatSeckillDayTitle(
+            item.systemTime,
+            item.startTime,
+            item.endTime
+          )
+          return item
+        })
+        // 多个 `已开抢` 将最后一个替换成 `抢购中`
+        if (this.secKillList.length >= 1) {
+          let has
+          let lastIndex
+          for (let i = 0; i < this.secKillList.length; i++) {
+            const item = this.secKillList[i]
+            if (item.title === '已开抢') {
+              if (has) {
+                has = true
+              } else {
+                lastIndex = i
+              }
+            }
+          }
+          if (lastIndex != undefined || lastIndex != null) {
+            this.secKillList[lastIndex].title = '抢购中'
+            if (this.secKillList[lastIndex].dayTitle == '已开抢') {
+              this.secKillList[lastIndex].dayTitle = '抢购中'
+            }
+            // auto selected '抢购中'
+            this.secKillSelectTimeCurIndex = lastIndex
+          }
+        }
+
+        if (this.secKillList[this.secKillSelectTimeCurIndex]) {
+          this.secKillData = this.secKillList[this.secKillSelectTimeCurIndex].merchandiseList
+          this.flashKillTabId = this.secKillList[this.secKillSelectTimeCurIndex].grouponId
+        }
+      }
+      this.loadAll.secKillLoad = false
+      this.$apply()
+    } catch (error) {
+      this.secondKillError = error
+    } finally {
+      this.loadAll.secKillLoad = false
+      this.$apply()
+      this.$wxpage.setData({ isShowLoading: false })
+    }
+  }
+
+  _computedMerchImage(item) {
+    const {
+      hotSaleTime,
+      hotCoverVideo,
+      coverVideo,
+      _videoDisabled,
+      bigImg,
+      hotCoverImage,
+      coverImage,
+      itemimage,
+      soldout
+    } = item
+    // 是否可以播放视频
+    let _videoPlay = false
+    let _videoUrl = null
+    let _imageUrl = null
+    if (hotSaleTime && hotCoverVideo) {
+      _videoPlay = true
+    } else if (!hotSaleTime && coverVideo) {
+      _videoPlay = true
+    }
+    if (_videoDisabled || soldout) {
+      _videoPlay = false
+    }
+    // 设置视频地址
+    if (_videoPlay) {
+      if (hotSaleTime) {
+        _videoUrl = hotCoverVideo
+      } else {
+        _videoUrl = coverVideo
+      }
+    }
+    // 设置封面图片
+    if (hotSaleTime) {
+      _imageUrl = hotCoverImage
+    } else {
+      _imageUrl = bigImg || coverImage || itemimage
+    }
+    item._videoPlay = _videoPlay
+    item._imageUrl = _imageUrl
+    item._videoUrl = _videoUrl
+    return item
+  }
+
+  _computedHotSaleData(item) {
+    const { hotSaleTime, systemTime } = item
+    item.hotSaleData = {}
+    if (hotSaleTime) {
+      item.hotSaleData = untils.formatHotSaleTime(hotSaleTime, systemTime)
+      if (untils.compareTime(hotSaleTime, systemTime) < 0) {
+        item.hotSaleData.activeStatus = 0 // 未开始
+      } else {
+        item.hotSaleData.activeStatus = 1 // 进行中
+      }
+    }
+    return item
+  }
+  // 秒杀判断结束时间前后
+  secKilllistFn(secKillList, sysTime) {
+    return secKillList
+      .map(secKill => {
+        secKill.merchandiseList.map(merchList => {
+          merchList.grouponId = secKill.grouponId
+        })
+        const regexp = /-/g
+        const end = new Date(secKill.endTime.replace(regexp, '/')).getTime()
+        const start = new Date(secKill.startTime.replace(regexp, '/')).getTime()
+        if (sysTime < start) {
+          secKill.isseckill = 1
+        } else if (sysTime >= start && sysTime < end) {
+          secKill.isseckill = 2
+        } else {
+          secKill.isseckill = 3
+        }
+        return secKill
+      })
+      .filter(secKill => secKill.isseckill !== 3)
+  }
+  quickBuy() {
+    const {
+      merchTypeId,
+      limitQuantity,
+      quantity,
+      userQuantity,
+      isneworder,
+      price,
+      attrList
+    } = this.curMerchType
+    const {
+      abbreviation,
+      title,
+      coverImage,
+      itemimage,
+      typecontent,
+      originprice,
+      growarea,
+      content,
+      saleType,
+      afterSaleTypeDesc,
+      activityprice,
+      merchtypeid,
+      activityid,
+      grouponId,
+      categoryIdList,
+      isseckill
+    } = this.merchData
+    if (categoryIdList) this.categoryIdListAll = [categoryIdList]
+    const merchandiseId = !this.merchData.merchandiseId
+      ? this.merchData.merchandiseid
+      : this.merchData.merchandiseId
+    const { cartMap } = this
+    let cartCount
+    if (isneworder && ~~activityid) {
+      cartCount = cartMap[merchandiseId]
+        ? cartMap[merchandiseId].addNum + this.goodsCount
+        : this.goodsCount
+    } else {
+      cartCount = cartMap[merchTypeId]
+        ? cartMap[merchTypeId].addNum + this.goodsCount
+        : this.goodsCount
+    }
+    if (this.activeStatus === 1) {
+      untils.showToast('不要太心急了，活动还没开始哦~')
+      return false
+    }
+
+    if (quantity === 0) {
+      untils.showToast('已经卖完啦~下次早点来吧~')
+      return false
+    }
+
+    if (this.activeStatus === 3) {
+      untils.showToast('活动已结束了，下次早点来吧~')
+      return false
+    }
+
+    if (limitQuantity && limitQuantity - userQuantity < cartCount) {
+      untils.showToast(`每人只能购买${limitQuantity}件哦~`)
+      return false
+    }
+
+    if (limitQuantity > 0 && userQuantity >= limitQuantity) {
+      untils.showToast('您已经购买过了，不能再买了哦~')
+      return false
+    }
+
+    if (~~activityid === 580 && !isneworder) {
+      untils.showToast('这个商品只可新人购买，看看别的吧')
+      return false
+    }
+    const getPrice = !price ? activityprice : price
+    const totalPrice = multiply(getPrice, this.goodsCount)
+    // save goods info for toTuxedo page
+    const newMerchData = Object.assign(this.merchData, {
+      title: !abbreviation ? title : abbreviation,
+      itemimage: !coverImage ? itemimage : coverImage,
+      typecontent,
+      originprice,
+      activityprice: getPrice,
+      addNum: this.goodsCount,
+      growarea,
+      content,
+      saleType,
+      attrList,
+      afterSaleTypeDesc,
+      merchTypeId,
+      merchandiseId
+    })
+    this.$parent.globalData.orderShowGoodsInfo = [newMerchData]
+    const orderData = [
+      {
+        merchandiseId: merchandiseId,
+        merchTypeId: !merchTypeId ? merchtypeid : merchTypeId,
+        quantity: this.goodsCount,
+        activityId: activityid
+      }
+    ]
+    this.methods.USERCOUPON({
+      nouserCoupon: this.merchData.unUseCoupon
+    })
+    this.methods.MERCHANDISEFN({
+      merchandiseIdDefault: [this.merchData.merchandiseId],
+      categoryIdListAll: this.categoryIdListAll
+    })
+    wepy.setStorageSync('orderData', orderData)
+    let groupon
+    if (grouponId) {
+      groupon = grouponId
+    } else {
+      groupon = this.globalDataAll.grouponId
+    }
+    if (this.merchData.saleType == 1) {
+      return wepy.navigateTo({
+        url: `/pages/toTuxedo/confirmationOrder?payOrderSource=3&totalPrice=${totalPrice}&grouponId=${groupon}&partnerId=${this.globalDataAll.partnerId}`
+      })
+    } else if (this.merchData.saleType == 5) {
+      return wepy.navigateTo({
+        url: `/pages/toTuxedo/confirmationOrder?payOrderSource=${ORDER_SOURCE.ELECTRIC_COUPON}&totalPrice=${totalPrice}&grouponId=${groupon}&partnerId=${this.globalDataAll.partnerId}`
+      })
+    }
+    wepy.navigateTo({
+      url: `/pages/toTuxedo/toTuxedo?payOrderSource=${isseckill ? 4 : 3}&totalPrice=${totalPrice}&grouponId=${grouponId}&partnerId=${this.globalDataAll.partnerId}`
+    })
+  }
+  checkIfShowDownLoadApp() {
+    const userType = this.globalDataAll.userType
+    // userType 3-副团长 4-团长
+    if (userType == 3 || userType == 4) {
+      const isShowDownLoadApp = wepy.getStorageSync('SHOW_DOWN_APP')
+      this.isShowDownLoadApp = !isShowDownLoadApp
+    }
+  }
+  handleActivityPage(options) {
+    // 活动二级页分享进入首页
+    let { fromActivityPage, grouponId, partnerId } = this.$parent.globalData
+    if(!fromActivityPage) return options
+    if(!options.isShare && fromActivityPage && getCurrentPages().length == 1) {
+      options.grouponId = grouponId
+      options.partnerId = partnerId
+    }
+    this.$parent.globalData.fromActivityPage = false
+    return options
+  }
+}
+</script>
+
+<style lang="stylus">
+  @-webkit-keyframes imagemove {
+    0% {
+      opacity 0
+    }
+    100% {
+      opacity 1
+    }
+  }
+  @-webkit-keyframes slidein {
+    0% {
+      transform scale(1)
+    }
+
+    50% {
+      transform scale(1.1)
+    }
+
+    100% {
+      transform scale(1)
+    }
+  }
+  $blackLight = #333
+  $blackLighter = #999
+  $blackSix = #666
+  #app
+    background-color #F2F2F2
+    min-height 100vh
+    padding-bottom 20rpx
+  .appWhite
+    background-color #F2F2F2 !important
+  .bgGrey
+    background-color #F2F2F2
+  .category-list-wrap
+    opacity 0
+    position fixed
+    left 0
+    top 0
+    z-index 99
+    transform translateY(-136rpx)
+    transition all .2s linear 0s
+  .showCategory
+    opacity 1
+    transform translateY(0rpx)
+  .modal__copy .modal__main
+    width 640rpx
+    display flex
+    flex-direction column
+    .header
+      height 60px
+      width 100%
+      line-height 60px
+      text-align center
+    .main
+      width 260px
+      height 50vh
+      margin 0 auto
+      margin-bottom 20px
+      padding 5px 10px
+      flex 1
+      font-size 11px
+      border 1px solid #F2F2F2
+      border-radius 10px
+      color $blackLight
+      overflow hidden
+      box-sizing border-box
+    .footer
+      width 100%
+      height 50px
+      line-height 50px
+      text-align center
+      background linear-gradient(180deg,rgba(2,197,34,1) 0%,rgba(4,185,34,1) 100%)
+      color white
+
+  .tipWrap
+    position relative
+    .addTip
+      width 569rpx
+      height 100rpx
+      padding-top 10rpx
+      position absolute
+      top 9rpx
+      right 20rpx
+      background url('https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/group_leader_bg.png') 0 0 no-repeat
+      background-size 100%
+      border-radius 12rpx
+      display flex
+      justify-content space-between
+      align-items center
+      color #fff
+      font-size 28rpx
+      z-index 12
+      .addTipLeft
+        margin-left 21rpx
+      .addTipRight
+        margin-right 20rpx
+        display flex
+        width 112rpx
+        height 56rpx
+        border-radius 28rpx
+        background linear-gradient(180deg, #02C522 0%, #04B922 100%)
+        justify-content center
+        align-items center
+  .tipModalWrap
+    position fixed
+    left 0
+    right 0
+    top 0
+    bottom 0
+    background rgba(0,0,0,.5)
+    z-index 999
+    .tipAddImg
+      position absolute
+      right 20px
+      top 7px
+    .tipAddImgIos
+      width 172px
+      height 202px
+    .tipAddImgAndroid
+      width 172px
+      height 243px
+
+  button.share
+    width 50px
+    height 50px
+    border-radius 50%
+    padding 0
+    background rgba(255, 255, 255, 0)
+    &::after
+      border none
+    image
+      width 100%
+      height 100%
+
+  .close
+    padding 100rpx 0
+    background-color #fff
+    image
+      display block
+      width 65px
+      height 65px
+      margin 0 auto
+      margin-bottom 20px
+    .text
+      font-size 12px
+      color #B6B6B6
+      text-align center
+
+  .empty
+    margin 50px 0
+    image
+      display block
+      width 88px
+      height 65px
+      margin 0 auto
+    .text
+      margin-top 10px
+      font-size 12px
+      color #B6B6B6
+      text-align center
+
+  .merchListGoupon
+    overflow hidden
+    background #F2F2F2
+
+  .popup
+  .popup__mask
+    position fixed
+    top 0
+    right 0
+    bottom 0
+    left 0
+    z-index 100
+  .popup__mask
+    background rgba(0, 0, 0, .7)
+  .popup__footer
+    height 44px
+    line-height 44px
+    display flex
+    justify-content center
+    align-items center
+    font-size 12px
+    color $blackSix
+    border-top 1px solid rgba(233,233,233,1);
+  .popup_body
+    padding-bottom env(safe-area-inset-bottom)!important
+    border-top 1px solid rgba(233,233,233,1)
+    width 100%
+    // height 198px
+    background white
+    position fixed
+    left 0
+    bottom 0
+    z-index 101
+    border-radius 24rpx 24rpx 0 0
+  .popup__header
+    font-size 15px
+    line-height 60px
+    text-align center
+  .popup__main
+    height 94px
+    display flex
+    align-items center
+    justify-content center
+    .timeline
+    .wechat
+      flex 1
+      color $blackLighter
+      display flex
+      align-items center
+      justify-content center
+      flex-direction column
+      image
+        width 48px
+        height 48px
+      text
+        font-size 11px
+        line-height 30px
+        margin-top 10px
+        color $blackSix
+    button
+      border 0
+      background transparent
+      &::after
+        content none
+  .restNo
+    height 60px
+    width 100%
+    display flex
+    align-items center
+    justify-content center
+    font-size 16px
+    color #999
+  .heightAuto
+    height auto
+  .top_page
+    background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 46%, rgba(248,248,248,1) 70%, rgba(245,245,245,1) 96%, rgba(255,255,255,1) 100%);
+  .heightAll
+    height 100vh
+    overflow hidden
+  $button = #666
+  $loadColor = #f9f9f9
+  .subject
+    display flex
+    align-items center
+    position relative
+    padding 0 24rpx
+    background white
+    padding-top 6rpx
+    height 89rpx
+    align-items center
+    justify-content space-between
+    &.transtion-bg
+      background linear-gradient(180deg,rgba(255,255,255,1) 0%,rgba(245,245,245,1) 100%)
+    .title
+      display flex
+      width 186rpx
+      height 36rpx
+      align-items center
+      image
+        width 186rpx
+        height 36rpx
+    .countdown
+      height 40rpx
+      line-height 40rpx
+      font-size 24rpx
+      margin-left 16rpx
+      display flex
+      align-items flex-end
+      flex 1
+      position relative
+      text
+        margin-top 4rpx
+        font-size 24rpx
+        color #FF4400
+      view
+        font-size 24rpx
+        color #FF4400
+      .countdownDisplay
+        color #FF4400
+        display flex
+        align-items center
+        font-family "PingFangSC-Medium, sans-serif"
+        font-size 36rpx
+        line-height 50rpx
+        position absolute
+        top 4rpx
+        left 0rpx
+    .copyButton
+      display flex
+      justify-content center
+      align-items center
+      box-sizing border-box
+      width 140rpx
+      height 44rpx
+      margin-left 190rpx
+      font-size 24rpx
+      color #9e9e9e
+      border 1rpx solid #C8C8C8
+      border-radius 30rpx
+    .arriveGo
+      display flex
+      flex-direction row
+      align-items center
+      .arriveGoLeft
+        height 34rpx
+        width 34rpx
+        background url('https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/group_time_left.png') 0rpx 0rpx
+        background-size 34rpx 34rpx
+      .arriveGoCenter
+        height 34rpx
+        color #FF4400
+        font-size 24rpx
+        display flex
+        align-items center
+        padding-left 7rpx
+        background url('https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/group_time_center.png') 0rpx 0rpx
+        background-size 11rpx 34rpx
+      .arriveGoRight
+        width 18rpx
+        height 34rpx
+        background url('https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/group_time_right.png') 0rpx 0rpx
+        background-size 18rpx 34rpx
+  .navigationLoad
+    width 100%
+    height 140rpx
+  .subjectLoad
+    width 100%
+    height 89rpx
+    view
+      margin-left 20rpx
+      margin-top 20rpx
+      width 600rpx
+      height 50rpx
+      background $loadColor
+  .r
+    float right
+  .l
+    float left
+  .leaderLoad
+    width 100%
+    height 91px
+    padding 6px 9px
+    .searchLoad
+      width 100%
+      height 28px
+      background $loadColor
+      margin-bottom 9px
+    .leadLoad
+      width 100%
+      height 51px
+      .imageLoad
+        width 41px
+        height 41px
+        margin-right 6px
+        background $loadColor
+      .textLoad
+        width 100px
+        overflow hidden
+        .loadP
+          width 100px
+          height 12px
+          margin-bottom 4px
+          background $loadColor
+      .shareLoad
+        width 34px
+        height 34px
+        margin-left 5px
+        background $loadColor
+  .bannerLoad
+    width 100%
+    padding 5px 9px
+    height 90px
+    .bannerContent
+      width 100%
+      height 85px
+      background $loadColor
+    .activiContent
+      width 100%
+      height 68px
+      padding-top 5px
+      display flex
+      flex-direction row
+      .actviList
+        display flex
+        width 100px
+        height 68px
+        margin-right 7px
+        background $loadColor
+  .secKillLoad
+    width 100%
+    padding 10px 9px
+    height 200px
+    .secHeader
+      width 100px
+      height 15px
+      background $loadColor
+    .secContent
+      display flex
+      flex-direction row
+      width 100%
+      height 47px
+      margin-top 10px
+      .secList
+        flex 1
+        width 36px
+        margin 5px 34px
+        height 36px
+        background $loadColor
+      .marList
+        flex 1
+        width 50px
+        margin 5px 4px
+        height 36px
+        background $loadColor
+    .secMerch
+      width 100%
+      height 110px
+      padding 7px 6px
+      .l
+        width 99px
+        height 99px
+        background $loadColor
+        margin-right 29px
+      .r
+        width 150px
+        height 99px
+        .secP
+          width 100px
+          height 16px
+          margin-bottom 8px
+          background $loadColor
+  .bottomLoading
+    background #F2F2F2
+  .seckill-list-wrap
+    padding 20rpx 20rpx 0
+  .seckill-list-wrapTop
+    padding-top 0rpx
+  .cartPosition
+    z-index 100
+    position fixed
+    width 21px
+    height 21px
+    display none
+    image
+      width 21px
+      height 21px
+  .cartPosiSec
+    display block
+    transition left .6s linear 0s, bottom .3s ease-in 0s
+  .cartPosiFir
+    display block
+    transition left .6s linear 0s, bottom .3s ease-out 0s
+.overflow-hidden
+  overflow hidden
+.rest-result-wrapper
+  padding-top 80rpx
+  background #ffffff
+  height 100vh
+  position relative
+.rest-grey-wrapper
+  background #F2F2F2
+.rest-result-wrappe-list
+  padding-top 80rpx
+  height 60vh
+.merch_none_wrapper
+  padding-top 20rpx
+.phone_modal
+  width 600rpx
+  border-radius 20rpx
+
+  .main
+    width 600rpx
+    padding 40rpx
+  .header
+    height 100rpx
+    width 100%
+    line-height 100rpx
+    background #67BD22
+    font-size 36rpx
+    color #ffffff
+    text-align center
+  .content
+    line-height 45rpx
+    color #55575F
+    width 520rpx
+    text-align center
+    margin 0 auto 32rpx auto
+    text
+     display inline-block
+     text-align left
+     font-size 32rpx
+  .footer
+    color #fff
+    font-size 32rpx
+    text-align center
+    line-height 88rpx
+    height 88rpxs
+    width 520rpx
+    background linear-gradient(180deg,rgba(2,197,34,1) 0%,rgba(4,185,34,1) 100%)
+    border-radius 44rpx
+.hotToday
+  width 100%
+  height 116rpx
+  padding 0 20rpx
+  padding-top 16rpx
+  image
+    width 100%
+    height 100rpx
+.hotTodayHeight
+  height 100rpx
+  padding-top 0
+.invite-bg
+  width 100%
+  background #FFF
+  position relative
+  padding 20rpx 0
+  // height: 108rpx;
+.partner-invite
+  // width 710rpx
+  // height 100rpx
+  // margin 0px auto
+  // display flex
+  // margin-bottom 20rpx
+  width 710rpx
+  height 88rpx
+  display block
+  margin 0 auto
+.btn
+  width 144rpx
+  height 48rpx
+  line-height 48rpx
+  text-align center
+  background linear-gradient(180deg, #FC7929 0%, #FF2E15 100%)
+  border-radius 28rpx
+  padding 0
+  font-size 24rpx
+  font-weight 400
+  color #FFF
+  position absolute
+  top 40rpx
+  right 40rpx
+  animation-duration 0.6s
+  animation-name slidein
+  animation-timing-function linear
+  animation-iteration-count infinite
+.partner-invite-new
+  width 710rpx
+  background-image url('https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/partner-invite-new.png')
+.invite-user
+  max-width 144rpx
+  height 48rpx
+.switch-btn
+  width 320rpx
+  height 88rpx
+  border-radius 88rpx
+  margin 60rpx auto
+  text-align center
+  line-height 88rpx
+  font-size 32rpx
+  background linear-gradient(180deg, #02C522 0%, #04B922 100%)
+  color #fff
+.deleteGoodsModalMask
+  position fixed
+  top 0
+  left 0
+  right 0
+  bottom 0
+  background rgba(0, 0, 0, .6)
+  z-index 1000
+.deleteGoodsModal
+  position fixed
+  left 50%
+  top 50%
+  transform translate(-50%, -50%)
+  width 600rpx
+  background #fff
+  border-radius 16rpx
+  overflow hidden
+  padding 40rpx
+  z-index 1008
+  .btnGroup
+    margin-top 32rpx
+    display flex
+    .tab
+      flex 1
+      font-size 32rpx
+      line-height 88rpx
+      border-radius 44rpx
+      text-align center
+    .normal
+      color #1E1E27
+      margin-right 22rpx
+      position relative
+      &::after
+        position absolute
+        display block
+        content ''
+        border 1px solid #DADAE1
+        left 0rpx
+        top 0rpx
+        width 100%
+        height 100%
+        border-radius 44rpx
+    .possible
+      background linear-gradient(180deg,rgba(2,197,34,1) 0%,rgba(4,185,34,1) 100%)
+      color #FFFFFF
+  .content
+    line-height 45rpx
+    text-align center
+    color #55575F
+    font-size 32rpx
+  .title
+    font-size 40rpx
+    color #27272A
+    text-align center
+    line-height 56rpx
+    margin-bottom 16rpx
+.bg-white
+  background #ffffff
+.bg-new-style
+  position relative
+  view:last-child
+    margin-bottom 0
+  .bg-new-style-radius
+    width 100%
+    height 16rpx
+    position absolute
+    left 0
+    bottom 0
+    background #F2F2F2
+    &::after
+      content ''
+      width 100%
+      height 16rpx
+      position absolute
+      top 0
+      left 0
+      border-radius 0 0 16rpx 16rpx
+      background rgba(206, 21, 14, 1)
+
+.bg-transparent
+  background transparent !important
+.king-kong-header
+  display flex
+  align-items center
+  justify-content flex-start
+  padding 13rpx 28rpx
+  box-sizing content-box
+  margin-top -20rpx
+  position relative
+  height 26rpx
+  background rgba(39, 39, 42, 0.04)
+  &.mb24
+    margin-bottom 24rpx
+  view
+    color #27272B
+    font-size 22rpx
+    display inline-block
+  .circle-dot
+    width 6rpx
+    height 6rpx
+    border-radius 50%
+    background #27272B
+    margin 0 24rpx
+  .header-text-natural
+    display flex
+    align-items center
+    justify-content flex-end
+    flex 1
+    image
+      width 12rpx
+      height 20rpx
+      display block
+      margin-left 16rpx
+  &.radius-12
+    border-radius 12rpx
+    padding 13rpx 20rpx
+    margin -8rpx 20rpx 12rpx
+.leader-card-wrap
+  padding-bottom 20rpx
+  margin-bottom -20rpx
+.marginTopBottom20
+  margin 20rpx 0
+.margin--tabbar
+  margin-bottom: calc(98rpx + env(safe-area-inset-bottom));
+.page-bg
+  position relative
+.pt-20
+  padding-top 20rpx
+.page-new-user-bg
+  position absolute
+  top 0px
+  width 750rpx
+  height 970rpx
+  background-image linear-gradient(top #FFFFFF 80%, #F2F2F2 100%)
+  background-image -webkit-linear-gradient(#FFFFFF 80%, #F2F2F2 100%);
+.king-kong-bg
+  position absolute
+  top 0px
+  width 750rpx
+  height 550rpx
+  background-image linear-gradient(#FFFFFF 70%, #F2F2F2)
+  background-image -webkit-linear-gradient(#FFFFFF 70%, #F2F2F2 100%);
+.mt-20-sub
+  margin-top -20rpx
+.turn-table
+  width 160rpx
+  height 160rpx
+  position fixed
+  bottom: calc(145rpx + env(safe-area-inset-bottom));
+  right 10rpx
+  z-index 1000
+  overflow hidden
+  .turn-table-img
+    width 160rpx
+
+@-webkit-keyframes turnTableHide {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(116rpx);
+  }
+}
+@-webkit-keyframes turnTableShow {
+  0% {
+    transform: translateX(116rpx);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+.anminater-hide
+  animation turnTableHide 250ms linear
+  animation-fill-mode forwards
+.anminater-show
+  animation turnTableShow 250ms linear
+  animation-fill-mode forwards
+
+.mb-18
+  margin-bottom 18rpx
+.threeYear
+  position absolute
+  width 100%
+  height 100vh
+  background linear-gradient(180deg, #FFFFFF 0%, #F2F2F2 100%)
+  &.threeYearOne
+    background url('https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/grouplist_wedding0.png?a=1') no-repeat
+    background-size contain
+  &.threeYearTwo
+    background url('https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/grouplist_wedding2.png?a=1') no-repeat
+    background-size contain
+  &.threeYearThree
+    background url('https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/grouplist_wedding1.png?a=1') no-repeat
+    background-size contain
+.threeYearColor
+  background linear-gradient(90deg, #FF1C19 0%, #FF4926 50%, #FF1C19 100%)
+  position absolute
+  width 100%
+  height 96rpx
+.threeYear-king-kong
+  height 454rpx
+  background #FFFFFF
+  border-radius 20rpx
+  margin 0 20rpx 20rpx
+  &.marginTop150
+    margin-top 150rpx
+  .king-kong-header
+    margin-top 0
+    padding 21rpx 20rpx 27rpx
+    background none
+    view
+      color rgba(255, 57, 61, 1)
+    .circle-dot
+      background rgba(255, 57, 61, 1)
+  &.threeYear-new
+    background transparent
+    border-radius none
+    padding-bottom 18rpx
+    height auto
+    .king-kong-header
+      margin -8rpx 0 12rpx
+      background rgba(255, 46, 32, 0.04)
+      border-radius 12rpx
+      padding 13rpx 20rpx
+</style>

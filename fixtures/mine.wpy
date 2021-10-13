@@ -1,0 +1,2704 @@
+<template>
+ <view>
+  <view class="loadingShow" wx:if ="{{ !loaded }}">
+    <img-cdn class="loading" src="group_loading.gif"></img-cdn>
+  </view>
+  <view class="Z {{ supportCustomTabBar ? 'padding--tabbar-mine' : ''}}" wx:else>
+    <view class="bgw">
+      <view class="msg">
+        <view class="leaderCard">
+          <view 
+            class="{{ noticeCount > 0 ? 'notice-active' : '' }}"
+            @tap="gotoNotice"
+          >
+            <img-cdn src="mine-notice.png" mode="widthFix"></img-cdn>
+          </view>
+        </view>
+      </view>
+      <view class="section mt35">
+        <view class="avatar">
+          <image src="{{ userData.avatar || userDataCope.avatar || userInfo.avatarUrl }}"></image>
+          <button class="headerBut" bindtap="onGotUserInfo" wx:if="{{ !ifActor && userType != 2 }}"></button>
+        </view>
+        <view class="userInfo" wx:if="{{ userType != 2 }}">
+          <view class="userInfo_inner">
+            <view class="userName">{{ userData.nickname || userDataCope.nickname || userInfo.nickName }}</view>
+            <view class="assistant_leader_icon" wx:if="{{ userType == 3 }}">
+              <text>副团长</text>
+            </view>
+          </view>
+          <view class="userId">用户ID：{{ userData.userId || userId }}</view>
+        </view>
+        <view class="userInfoLogin" wx:else>
+          <view class="userLogin" @tap="clickLogin">点击登录</view>
+          <view class="userId">用户ID：{{ userData.userId }}</view>
+        </view>
+
+      </view>
+      <view class="section mt30" wx:if="{{ isPartner === 1 && !leaderFeaturesClosed }}">
+        <view class="grossEarnings" @tap="toMyIncome({{accumulatedIncome}})">
+          <view>
+            <view class="num pl40"><text>{{ isShow ?  accumulatedIncome  : '****'}}</text></view>
+            <view class="isShow" @tap.stop="toggleShow('isShow')">
+              <image  src="https://imgcdn.youhaodongxi.com/weapp/shihuituan/{{ isShow ? 'eye_open.png' : 'eye_close.png' }}"></image>
+            </view>
+          </view>
+          <view class="gen">累计收益(元)</view>
+
+        </view>
+        <view class="accountBalance" @tap="toMyAccount">
+          <view class="num"><text>{{ isShow ? balance : '****'}}</text></view>
+          <view class="gen">账户余额(元)</view>
+        </view>
+      </view>
+    </view>
+    <view class="section styleB yjzx mt30" wx:if="{{ isPartner === 1 && !leaderFeaturesClosed }}">
+      <view class="more" @tap="redirectTo('/pagesPartner/income/salesPerformance','xsyj')">查看全部 <view><image src="/statics/BackChevron@2x.png" mode="widthFix"></image></view></view>
+      <view class="title">
+        业绩中心
+        <view class="isShow" @tap="toggleShow('isShow2')">
+          <image  src="https://imgcdn.youhaodongxi.com/weapp/shihuituan/{{ isShow2 ? 'eye_open.png' : 'eye_close.png' }}"></image>
+        </view>
+      </view>
+      <view class="flexBox priceBox mt27">
+        <view class="flexItem">
+          <view><text>{{ isShow2 ? todaySales : '****'}}</text></view>
+          <view>当前团销售额(元)</view>
+        </view>
+        <view class="flexItem">
+          <view><text>{{ isShow2 ? orderCount : '****'}}</text></view>
+          <view>主订单数量</view>
+        </view>
+        <view class="flexItem">
+          <view><text>{{ isShow2 ? todayEarn : '****'}}</text></view>
+          <view>当前团赚(元)</view>
+        </view>
+      </view>
+      <view>若当前没有团，显示上一个团的销售额和应到账收益</view>
+    </view>
+    <view class="section styleB mt20" wx:if="{{ (isPartner === 1 || userType == 3) && !leaderFeaturesClosed }}">
+      <view class="title">
+        我的团购
+      </view>
+      <view class="flexBox myGroup">
+        <view
+          wx:for="{{ list }}" wx:key="id"
+          wx:if="{{ isPartner || (item.id != 'aa' && item.id != 'poorDistra' && item.id != 'commission') }}"
+          class="flexItem" @tap="redirectTo('{{item.link}}','{{item.id}}')"
+        >
+          <view class="icon">
+            <image mode="widthFix" src="{{item.src}}"></image>
+            <view wx:if="{{item.isFuture}}" class="incoming">
+              <img-cdn mode="widthFix" src="goOnlineMine.png"></img-cdn>
+            </view>
+          </view>
+          <view>{{item.name}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section styleB mt20" wx:if="{{ (isPartner === 1 || userType == 3) && !leaderFeaturesClosed }}">
+      <view class="tips">点击为你想要的功能投票</view>
+      <view class="title">
+        营销工具
+      </view>
+      <view class="flexBox  myGroup">
+        <view
+          wx:for="{{ toolsList }}" wx:key="index"
+          class="flexItem"
+          @tap.stop="toolsHandle({{item.id}},{{item.link}},{{item.isFuture}})"
+        >
+          <view class="icon"><image mode="widthFix" src="{{item.src}}"></image><view wx:if="{{item.isFuture}}" class="incoming"><img-cdn mode="widthFix" src="goOnlineMine.png"></img-cdn></view></view>
+          <view>{{ item.name }}</view>
+        </view>
+      </view>
+    </view>
+    <view class="section styleB mt20" wx:if="{{ isPartner === 1 && !leaderFeaturesClosed }}">
+      <view class="title">
+        管理
+      </view>
+      <view class="flexBox  myGroup">
+        <view
+          wx:for="{{ manageList }}" wx:key="index"
+          class="flexItem"
+          @tap="redirectTo('{{item.link}}','{{item.id}}')"
+        >
+          <view class="icon">
+            <image mode="widthFix" src="{{item.src}}"></image>
+          </view>
+          <view>{{item.name}}</view>
+        </view>
+      </view>
+    </view>
+    <!-- 新增邀请好友得优惠券 -->
+    <view class="section content mt20 gotoInvite" wx:if="{{ newComerTicketId != -1 }}">
+      <image @tap="gotoNewcomer" src="https://shtimgcdn-test.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/invite_banner@3x.png"></image>
+    </view>
+    <!-- 新增我的拼团入口 -->
+    <view class="section content mt20">
+      <view class="activeNav {{ showAppDownload && isShowLife ? 'activeNav_four' : ''}}">
+          <view class="activeCoupon" @tap="redirectTo('/pages/couponList/myCoupon', 'coupon')">
+            <view class="couponItem">
+                <view class="itemTitle">
+                  优惠券
+                </view>
+                <view class="itemNum">
+                  共<text class="itemNum-red">{{ couponNum }}</text>张
+                </view>
+            </view>
+            <view class="itemImage">
+              <img-cdn src="booking-coupon-icon.png" />
+            </view>
+          </view>
+          <view wx:if="{{ showAppDownload }}" class="activeCoupon" bind:tap="gotoAppDonwloadIntegral">
+            <view class="couponItem">
+                <view class="itemTitle">
+                  积分商城
+                </view>
+                <view class="itemNum">
+                  <text class="itemNum-red">{{ integralTotal }}</text>积分
+                </view>
+            </view>
+            <view class="itemImage">
+              <img-cdn src="icon-integral-shop.png" />
+            </view>
+          </view>
+          <view wx:if="{{isShowLife}}" class="activeCoupon activeLife2" @tap="redirectTo('/pagesFeatures/lifeService/lifeList', 'life')">
+            <view class="couponItem">
+               <view class="itemTitle">
+                  <text class="text-Title">十荟生活</text>
+                  <img-cdn class="new-icon" src="life-new.png" />
+                </view>
+                <view class="itemNum">
+                  尽享优惠
+                </view>
+            </view>
+            <view class="itemImage">
+              <img-cdn src="booking-life-icon.png" />
+            </view>
+          </view>
+          <view class="activeCoupon" @tap="redirectTo('/pagesGroupBook/groupBooking/order','g')">
+            <view class="couponItem">
+               <view class="itemTitle">
+                  我的拼团
+                </view>
+                <view class="itemNum">
+                  一起拼更省钱
+                </view>
+            </view>
+            <view class="itemImage">
+              <img-cdn src="booking-group-icon.png" />
+            </view>
+          </view>
+      </view>
+    </view>
+    <view class="section content mt20">
+      <!-- <view class="header" @tap="redirectTo('/pages/orderList/orderList?type=0')">
+        <view class="title">
+          我的订单
+        </view>
+        <view class="contentmore">
+          <view>查看全部</view>
+          <image src="https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/mine-goto.png" mode="widthFix"></image>
+        </view>
+      </view> -->
+      <view class="flexBox myGroup">
+        <view
+          wx:for="{{ orderList }}" wx:key="index"
+          class="flexItem orderIcon {{ item.name=='全部订单'?'orderBg':'' }}" @tap="redirectTo({{item.link}})"
+        >
+          <image class="icon" mode="widthFix" src="{{item.src}}"></image>
+          <view class="text">{{item.name}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section content mt20" wx:if="{{ (isPartner == 1 || userType == 3) && leaderFeaturesClosed }}">
+      <view class="header" @tap="redirectTo('/pages/orderList/orderList?type=0')">
+        <view class="title">
+          我的功能
+        </view>
+        <view class="contentmore"></view>
+      </view>
+      <view class="flexBox otherList myGroup">
+        <view
+          wx:if="{{ (contactUsUrl || serviceNumber) && (userType === 3 || userType === 4)}}"
+          class="flexItem" @tap="contactUs"
+        >
+          <view class="iconImage">
+            <img-cdn mode="widthFix" src="icon-service.png"></img-cdn>
+          </view>
+          <view class="text">联系客服</view>
+        </view>
+        <!-- <view
+          class="flexItem" @tap="redirectTo('/pages/couponList/myCoupon', 'coupon')"
+        >
+          <view class="iconImage">
+            <image mode="widthFix" src="https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/mine-coupon.png"></image>
+            <tip-red wx:if="{{ couponNum > 0 }}" couponNum="{{ couponNum }}"></tip-red>
+          </view>
+          <view class="text">优惠券</view>
+        </view> -->
+        <view
+          wx:if="{{ userType != 3 }}"
+          class="flexItem" @tap="redirectTo('/pagesMore/group/groupMain', 'eee')"
+        >
+          <view class="iconImage">
+            <img-cdn mode="widthFix" src="group_data_analysis_icon_line.png"></img-cdn>
+          </view>
+          <view class="text">群数据</view>
+        </view>
+        <view
+          class="flexItem" wx:if="{{ globalDataAll.switchStatus != 1 && globalDataAll.userIsPartner == 1 }}"  @tap="joinGroup()"
+        >
+          <view class="iconImage">
+            <img-cdn mode="widthFix" src="mine-group.png"></img-cdn>
+          </view>
+          <view class="text">专属群</view>
+        </view>
+        <view
+          class="flexItem" @tap="redirectTo('/pages/mine/aboutUs', 'aboutUs')"
+        >
+          <view class="iconImage">
+            <img-cdn mode="widthFix" src="mine-sigh.png"></img-cdn>
+          </view>
+          <view class="text">关于我们</view>
+        </view>
+      </view>
+    </view>
+    <view class="section content mt20" wx:if="{{ (isPartner != 1 && userType != 3) }}">
+      <view class="contentBg">
+        <view class="header common-use-header" @tap="redirectTo('/pages/newUser/switchLeader')">
+          <view class="title titlepage" @tap.stop="openQuestModel">
+            <view class="title-color">常用团长</view>
+            <img-cdn src="mine-quest-c.png"></img-cdn>
+          </view>
+          <view class="contentmore check-g">
+            <view>切换团长</view>
+            <img-cdn src="mine-goto-c.png" mode="widthFix"></img-cdn>
+          </view>
+        </view>
+        <view class="defaultPartner" @tap="watchMap({{ userDetail.lat }}, {{ userDetail.lng }}, {{ userDetail.nickname }}, {{ userDetail.address }})">
+            <view class="user">
+              <image src="{{ userDetail.avatar }}"></image>
+              <view class="name">{{ userDetail.nickname }}</view>
+              <view class="address">自提点：{{ userDetail.address }}</view>
+            </view>
+            <view class="gotoMap">导航</view>
+        </view>
+        <view class="connectPartner">
+          <img-cdn class="connectImage" src="mine_guarantee.png"></img-cdn>
+          <view class="connectText">商品有任何问题，请联系团长，让您售后无忧！</view>
+          <view wx:if="{{ (contactUsUrl || serviceNumber) }}" class="connectText service-tel" @tap="contactUs">联系不到团长？<text class="service-text">联系客服</text><image src="/statics/icon_phone.png" mode="widthFix"></image></view>
+        </view>
+      </view>
+    </view>
+    <view class="section content mt20" sytle="height: auto;" bind:tap="redirectTo('/pages/applyPartner/applyPartner?self=1')" wx:if="{{ isPartner != 1 && userType != 3 }}">
+      <img-cdn style="width: 100%;display: block;" src="apply-partner-cover.png" mode="widthFix"/>
+    </view>
+
+    <view class="section content mt20" wx:if="{{ isPartner != 1 && userType != 3 }}">
+      <view class="header" @tap="redirectTo('/pages/orderList/orderList?type=0')">
+        <view class="title">
+          我的功能
+        </view>
+        <view class="contentmore"></view>
+      </view>
+      <view class="flexBox otherList myGroup">
+        <view
+          wx:for="{{ userMineList }}" wx:key="index"
+          class="flexItem" @tap="redirectTo({{item.path}}, {{item.id}})"
+        >
+          <view class="iconImage">
+            <image mode="widthFix" src="{{item.icon}}"></image>
+            <tip-red wx:if="{{ couponNum > 0 && item.id == 'coupon' }}" couponNum="{{ couponNum }}"></tip-red>
+          </view>
+          <view class="text">{{item.text}}</view>
+        </view>
+      </view>
+    </view>
+    <view class="section styleB coupon mt20 paddingNone" wx:elif="{{(isPartner == 1 || userType == 3) && !leaderFeaturesClosed}}">
+      <block wx:for="{{ mineList }}" wx:key="index">
+        <view wx:if="{{item.id != 'myAccount' && item.id != 'd' && ( item.isShow && !isPartner && userType != 3 || !item.isShow && isPartner || item.id == 'g')}}"
+              @tap="redirectTo('{{item.path}}','{{item.id}}')">
+          <view class="arrowBtn"><image src="/statics/BackChevron@2x.png" mode="widthFix"></image></view>
+          <view>{{item.text}}</view>
+        </view>
+        <view class="couponBox" wx:if="{{item.id == 'd' || (item.id == 'myAccount' && !item.isShow && isPartner)}}" @tap="redirectTo('{{item.path}}','{{item.id}}')">
+          <view>{{ item.text }}</view>
+          <view wx:if="{{couponNum !==0 && item.id == 'd'}}">
+            <text>{{couponNum}}</text>
+            <text> 张</text>
+          </view>
+          <view wx:elif="{{item.id == 'myAccount'}}">
+            <text></text>
+            <text>￥{{ balance }}</text>
+          </view>
+          <view class="arrowBtn"><image src="/statics/BackChevron@2x.png" mode="widthFix"></image></view>
+        </view>
+      </block>
+      <view class="rest" wx:if="{{ isPartner === 1 }}">
+        <view>休息</view>
+        <view class="switch" @tap="switchButtonFn">
+          <view class="switchButton {{ifswitchPartner?'switchIfButton':''}}">
+            <view class="switchDat"></view>
+          </view>
+        </view>
+      </view>
+      <view class="rest" wx:if="{{ isPartner === 1 }}">
+        <view>声音开关</view>
+        <view class="switch" @tap="switchVoice">
+          <view class="switchButton {{isSwitchVoice?'switchIfButton':''}}">
+            <view class="switchDat"></view>
+          </view>
+        </view>
+      </view>
+      <view class="rest" wx:if="{{ isPartner === 1 }}">
+        <view>服务通知电话显示</view>
+        <view class="switch" @tap="switchPhone">
+          <view class="switchButton {{ isSwitchPhone == 1 ? 'switchIfButton' : '' }}">
+            <view class="switchDat"></view>
+          </view>
+        </view>
+      </view>
+      <view class="rest" wx:if="{{ isPartner === 1 }}">
+        <view>文本通知显示提货码</view>
+        <view class="switch" @tap="switchRement">
+          <view class="switchButton {{ isSwitchRement == 1 ? 'switchIfButton' : '' }}">
+            <view class="switchDat"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="section content mt20 app-download" wx:if="{{showAppDownload}}">
+      <block wx:if="{{ isPartner === 1 || userType === 3 }}">
+        <view class="mask" wx:if="{{appDownloadCountdown > 0}}">
+          <view class="tips">
+            <img-cdn src="app-download-tips.png" mode="widthFix"/>
+            <view class="button" bind:tap="closeAppDownloadTips">我知道了({{appDownloadCountdown}}s)</view>
+          </view>
+        </view>
+        <view class="main">
+          <view class="description">
+            <view>团长您好，为提升性能，保证用户购物体验，已下线小程序团长相关功能，请下载“</view>
+            <view style="color:#04B922;">十荟团APP</view>
+            <view>”使用团长端所有功能，感谢理解~</view>
+          </view>
+          <view class="button" bind:tap="gotoAppDonwload">下载十荟团APP</view>
+        </view>
+      </block>
+      <block wx:else>
+        <view class="block" bind:tap="gotoAppDonwload">
+          <view class="left">
+            <img-cdn src="v2-logo@2x.png" />
+            <view>十荟团APP</view>
+          </view>
+          <view class="right">
+            <view>下载APP体验更佳</view>
+            <sht-icon className="icon-arrow-right" styleMap="font-size: 28rpx; vertical-align: middle; margin-top: -5rpx;" />
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+  <ModalShowDouble
+    wx:if="{{isModalShow}}"
+  ></ModalShowDouble>
+
+  <ModalShowDouble wx:if="{{modalShowDoubleIf}}"
+                   copyContent="是否更新您的个人信息， 每天只可刷新一次"
+                   confirmText="刷新"
+  ></ModalShowDouble>
+  <ModalShow
+    wx:if="{{ madalIf }}"
+    :copyContent.sync="copytextOne"
+    :copyHeader.sync="copyHeaderOne"
+  ></ModalShow>
+  <app-modal class="modal__copy" wx:if="{{ groupAssitantTipShow }}" closable="{{ false }}" scaleAnimation="scaleAnimation">
+    <view slot="main">
+      <view class="header">
+        群助手即将上线
+      </view>
+      <view class="main">
+        <view class="p t_p">
+          <img-cdn src="group_assistant_index_1.png" class="index_img"></img-cdn>
+          <text>退群人员提醒：帮助团长快速定位退群人员，做好流失召回准备工作；</text>
+        </view>
+        <view class="p t_p">
+          <img-cdn src="group_assistant_index_2.png" class="index_img"></img-cdn>
+          <text>新入群名单：可显示新入群团员名单及下单情况，辅助团长提高新人下单数量；</text>
+        </view>
+        <view class="p t_p">
+          <img-cdn src="group_assistant_index_3.png" class="index_img"></img-cdn>
+          <text>链接分享：可显示团长每日团购或链接分享所带来访问数量和订单数量；</text>
+        </view>
+        <view class="p t_p">
+          <img-cdn src="group_assistant_index_4.png" class="index_img"></img-cdn>
+          <text>群工具：可通过群工具将每日精品商品推送至群内，方便团员下单。</text>
+        </view>
+        <view class="h2">
+          <text>声明</text>
+        </view>
+        <view class="p">1. 隐私：群机器人仅抓取群名称、群人数、新入群团员、退群团员；</view>
+        <view class="p">2. 刷屏：为防止刷屏带来团员反感情绪，机器人不会自动推送商品至微信群。</view>
+      </view>
+      <view class="footer" bind:tap="hideGroupAssistantTip">知道了</view>
+    </view>
+  </app-modal>
+  <app-modal class="modal__qr" wx:if="{{ showQr }}" closable="{{ false }}" scaleAnimation="scaleAnimation">
+    <view slot="main">
+      <view class="main">
+        <view class="mainText">向团长出示二维码取货</view>
+        <image src="{{ qrUrl }}"></image>
+      </view>
+      <view class="footer" bind:tap="hideShowQr">
+        <img-cdn src="group_tipClose.png"></img-cdn>
+      </view>
+    </view>
+  </app-modal>
+  <app-modal class="modal__copy" wx:if="{{ defaultPartnerShow }}" closable="{{ false }}" scaleAnimation="scaleAnimation">
+    <view slot="main">
+      <view class="main">
+        <view class="mainText">常用团长是你下单时默认选择的取货团长，商品送达后，请前往团长自提点取货</view>
+      </view>
+      <view class="footer" bind:tap="hideDefaultPartner">我知道了</view>
+    </view>
+  </app-modal>
+  <leader-change-card
+    wx:if="{{ newLogin && !isHasPhone }}"
+    title="登录抢购商品，立享实惠"
+    buttonTitle="去登录"
+    bind:LeaderChangeCardPhoneNum="LeaderChangeCardPhoneNum"
+    bind:LeaderChangeCardClose="LoginClose"
+  ></leader-change-card>
+  <mp-actionsheet bind:actiontap="actionsheetClick" bind:close="actionsheetClose" show="{{showActionsheet}}" actions="{{contactMethods}}"></mp-actionsheet>
+  <block wx:if="{{ switchShow }}">
+    <view class="deleteGoodsModalMask"></view>
+    <view class="deleteGoodsModal">
+      <view class="title">提示</view> 
+      <view class="content"><text>{{ switchHeader }}</text></view> 
+      <view class="btnGroup">
+        <view class="tab normal" bindtap="cancleSwitchGroup">再想想</view>
+        <view class="tab possible" bindtap="confirmSwitchGroup">是的</view>
+      </view>
+    </view>
+  </block>
+ </view>
+</template>
+<script>
+  import wepy from 'wepy'
+  import { connect } from 'wepy-redux'
+  import ModalShowDouble from '@/components/noData/modalShowDouble'
+  import ModalShow from '@/components/noData/modalShow'
+  import { 
+    cTracking
+  } from '@/api/track'
+  import {
+    getServiceNumber, getNoticeCount, getQueryCartNum, partnerRest,
+    getPartnerAccountInfo, updateUser, vote,
+    myCoupons, getUserinfo, getqr, setVoice, partnerTaskFn, remindShowTel,
+    remindShowCode, showGroupAssistant, newcomberFitAct, getUserCheckMobile,
+    isNotAuthPartner, partnerAuthorize, getIsPartner, getIndexPartnerInfo,
+    hasActiveLife, getIntegralTotal, getWebChatuserToken
+  } from '@/api'
+  // eslint-disable-next-line no-duplicate-imports
+  import * as Api from '@/api'
+  import { APP_DOWNLOAD_LINK, APP_DOWNLOAD_LINK_INTEGRAL } from '@/constants'
+
+  const toolsModalMap = {
+    aaa: {},
+    bbb: {
+      name: '唱单',
+      title: '唱单投票',
+      des: '唱单：为了增加宣传力度，促进团长销量。团长可将“购买某件商品的客户清单”复制后，发送到微信群中，以刺激其他用户购买。',
+      flag: 'bbb',
+      imageUrl: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/comming_soon%20.png'
+    },
+    ccc: {
+      name: '优惠券包',
+      title: '优惠券包投票',
+      des: '优惠券包：团长可以发送优惠券给客户，也可以发一组优惠券到群里供大家抢。',
+      flag: 'ccc',
+      imageUrl: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/comming_soon%20.png'
+
+    },
+    ddd: {
+      name: '购买奖励',
+      title: '购买奖励投票',
+      des: '购买奖励：团长可以发起奖励，通过设置购买条件（购买件数/金额）和奖励产品，来对顾客进行奖励。并且系统可以统计达到奖励条件的顾客。',
+      flag: 'ddd',
+      imageUrl: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/comming_soon%20.png'
+
+    }
+  }
+  const list = [
+    {
+      id: 'aa',
+      src: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/regiment_icon.png',
+      name: '历史开团',
+      link: '/pagesPartner/managergroup/myGroup'
+    },
+    {
+      id: 'ff',
+      src: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/mine_news.png',
+      name: '到货提醒',
+      link: '/pagesPartner/mine/arrivalNotice'
+    },
+    {
+      id: 'dd',
+      src: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/mine_aftersale.png',
+      name: '售后反馈',
+      link: '/pagesPartner/mine/saleList'
+    }
+  ]
+  const toolsList = [
+    {
+      id: 'eee',
+      src: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/group_data_analysis_icon.png',
+      link: '/pagesMore/group/groupMain',
+      name: '群数据'
+    },
+    {
+      id: 'fff',
+      src: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/commodity_commission.png',
+      link: '/pagesMore/group/groupTools',
+      name: '商品佣金/素材'
+    },
+    {
+      id: 'bbb',
+      src: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/singMine.png',
+      link: '',
+      name: '唱单',
+      isFuture: true
+    },
+    {
+      id: 'ccc',
+      src: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/priceMine.png',
+      link: '',
+      name: '优惠券包',
+      isFuture: true
+    },
+    {
+      id: 'ddd',
+      src: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/giftMine.png',
+      link: '',
+      name: '购买奖励',
+      isFuture: true
+    }
+  ]
+  const manageList = [
+    {
+      src: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/mine_team.png',
+      name: '团员管理',
+      link: '/pagesPartner/mine/memberManagement'
+    }
+  ]
+  const orderList = [
+    {
+      src: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/v2-mine-topay.png',
+      link: '/pages/orderList/orderList?type=1',
+      name: '待支付'
+    },
+    {
+      src: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/v2-mine-deliver.png',
+      link: '/pages/orderList/orderList?type=2',
+      name: '待收货'
+    },
+    {
+      src: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/v2-mine-price.png',
+      link: '/pages/orderList/orderList?type=3',
+      name: '已完成'
+    },
+    {
+      src: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/v2-booking-order-icon.png',
+      link: '/pages/orderList/orderList?type=0',
+      name: '全部订单'
+    }
+  ]
+  const userMineList = [
+    // {
+    // id: 'coupon',
+    // path: '/pages/couponList/myCoupon',
+    // icon: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/mine-coupon.png',
+    // text: '优惠券',
+    // isShow: true
+    // },
+    {
+      id: 'qrUrl',
+      path: '',
+      icon: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/mine-qrUrl.png',
+      text: '提货二维码',
+      isShow: true
+    }, {
+      id: 'applyPartner',
+      path: '/pages/applyPartner/applyPartner?self=1',
+      icon: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/mine-partner.png',
+      text: '申请团长',
+      isShow: true
+    }, {
+      id: 'aboutUs',
+      path: '/pages/mine/aboutUs',
+      icon: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/mine-sigh.png',
+      text: '关于我们',
+      isShow: true
+    }]
+  const mineList = [
+    {
+      id: 'c',
+      path: '/pages/applyPartner/applyPartner?self=1',
+      icon: '/statics/wode-shenqingtuanzhang@2x.png',
+      text: '申请团长',
+      isShow: true
+    },
+    {
+      id: 'd',
+      path: '/pages/couponList/myCoupon',
+      icon: '/statics/wode-youhuiquan@2x.png',
+      text: '优惠券',
+      isShow: true
+    },
+    {
+      id: 'e',
+      path: '/pages/newUser/switchLeader',
+      icon: '/statics/mine_nearby.png',
+      text: '设置默认团长',
+      isShow: true
+    },
+    {
+      id: 'f',
+      path: '/pagesPartner/income/alreadyIncome',
+      icon: '/statics/yinhangka@2x.png',
+      text: '我的银行卡',
+      isShow: false
+    },
+    {
+      id: 'g',
+      path: '/pages/mine/aboutUs',
+      icon: 'https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/qualification_icon.png',
+      text: '关于十荟团',
+      isShow: true
+    },
+    {
+      id: 'h',
+      path: '/pagesPartner/mine/qrCodeApplyPartener',
+      text: '邀请好友注册团长',
+      isShow: false
+    }
+  ]
+
+  @connect({
+    ifActor (state) {
+      return state.minestate.ifActor
+    }
+  })
+  export default class extends wepy.page {
+    config = {
+      navigationBarTitleText: '',
+      enablePullDownRefresh: true,
+      navigationBarBackgroundColor: '#F5F5F5',
+      usingComponents: {
+        'app-error': '/customComponents/AppError/index',
+        'tip-red': '/customComponents/TipsRed/index',
+        'leader-change-card': '/customComponents/LeaderChangeCard/index',
+        'app-modal': '/customComponents/AppModal/index',
+        'sht-icon': '/customComponents/@shihuituan/design-weapp/icon/index',
+        'mp-actionsheet': '/customComponents/actionsheet/actionsheet'
+      }
+    }
+    data = {
+      supportCustomTabBar: false,
+      groupontype: null,
+      cityId: null,
+      balance: 0.00, // 账户余额
+      todaySales: 0.00, // 当前团销售额
+      orderCount: 0, // 订单量
+      todayEarn: 0.00, // 团赚
+      accumulatedIncome: 0.00, // 累计收益
+      list, // 开团相关
+      orderList, // 订单相关
+      toolsList, // 工具
+      wxCode: '',
+      loaded: true,
+      options: null,
+      level: '',
+      noticeCount: 0,
+      modalShowDoubleIf: false,
+      madalIf: 0,
+      switchHeader: '',
+      copytextOne: '',
+      copyHeaderOne: '敬请期待',
+      myAccountData: {},
+      userDataCope: {},
+      userData: {},
+      saleList: [],
+      userId: '',
+      grouponId: '',
+      mineList,
+      userMineList,
+      defaultPartnerId: null,
+      switchShow: 0,
+      isPartner: 0,
+      couponNum: 0,
+      ifswitchPartner: 0,
+      isShowModal: false,
+      isRest: true,
+      isShow: true, // 是否显示金额
+      isShow2: true, // 是否显示金额
+      isShowLife: false, // 是否显示十荟生活入口
+      userType: 1,
+      manageList,
+      qrUrl: '',
+      isSwitchVoice: false,
+      taskData: [],
+      taskError: null,
+      openTask: 0,
+      closeStatus: 0,
+      isSwitchPhone: null,
+      isSwitchRement: null,
+      groupAssitantTipShow: false,
+      newComerTicketId: -1,
+      userDetail: null,
+      defaultPartnerShow: false,
+      showQr: false,
+      newLogin: false,
+      leaderFeaturesClosed: true,
+      showAppDownload: false,
+      appDownloadCountdown: 0,
+      showActionsheet: false,
+      serviceNumber: '',
+      userInfo: {},
+      integralTotal: 0, // -商城积分
+      // 客服相关
+      contactUsUrl: '',
+      contactMethods: [],
+      globalDataAll: {}
+    }
+    methods = {
+      // 立即加群
+      joinGroup() {
+        if (this.globalDataAll.role == 1) {
+          // 加群判断（老团长->业绩是否合格->是否加了TC群）
+          if (this.globalDataAll.achievementStatus == 1) {
+            if (this.globalDataAll.tcGroupStatus == 0) {
+              wx.navigateTo({
+                url: `/pages/joinGroup/joinGroup`
+              })
+            } else {
+              this.$toast('已加运营群请勿重复添加哦')
+            }
+          } else {
+            this.$toast('业绩合格就可以获得专属运营群哦，赶快分享商品卖货吧')
+          }
+        } else {
+          // 加群判断（新团长->业绩合格->是否加了TC群）
+          // 加群判断（新团长->业绩不合格->是否加了新手群）
+          if (this.globalDataAll.achievementStatus == 1) {
+            if (this.globalDataAll.tcGroupStatus == 0) {
+              wx.navigateTo({
+                url: `/pages/joinGroup/joinGroup`
+              })
+            } else {
+              this.$toast('已加运营群请勿重复添加哦')
+            }
+          } else {
+            if (this.globalDataAll.newGroupStatus == 0) {
+              wx.navigateTo({
+                url: `/pages/joinGroup/joinGroup`
+              })
+            } else {
+              this.$toast('已加运营群请勿重复添加哦')
+            }
+          }
+        }
+        
+      },
+      gotoNotice () {
+        this.noticeCount = 0
+        this.$apply()
+        wepy.navigateTo({ url: '/pages/messages/message' })
+      },
+      contactUs() {
+        const { contactMethods } = this
+        if (contactMethods && contactMethods.length > 1) {
+          this.showActionsheet = true
+        } else {
+          if (contactMethods[0].value == 1) {
+            const { contactUsUrl } = this
+            wx.navigateTo({
+              url: `/pages/webView/webView?src=${encodeURIComponent(contactUsUrl)}&title=在线客服`
+            })
+          } else if (contactMethods[0].value == 2) {
+            wx.makePhoneCall({
+              phoneNumber: this.serviceNumber
+            })
+          }
+        }
+      },
+      async actionsheetClick(e) {
+        const { value } = e.detail || {}
+        if (value == 1) {
+          const { contactUsUrl } = this
+          wx.navigateTo({
+            url: `/pages/webView/webView?src=${encodeURIComponent(contactUsUrl)}&title=在线客服`
+          })
+        } else if (value == 2) {
+          wx.makePhoneCall({
+            phoneNumber: this.serviceNumber
+          })
+        }
+        this.showActionsheet = false
+      },
+      actionsheetClose() {
+        this.showActionsheet = false
+      },
+      hideGroupAssistantTip () {
+        this.groupAssitantTipShow = false
+      },
+      async toolsHandle(id, url, isFuture) {
+        if (id === 'aaa') {
+          if (this.groupontype === 3) {
+            wepy.showToast({
+              title: '团已结束',
+              icon: 'none'
+            })
+            return
+          }
+          wx.navigateTo({
+            url
+          })
+          return
+        } else if (id === 'eee' || id === 'fff') {
+          wx.navigateTo({
+            url
+          })
+          return
+        }
+        this.$invoke('Modal', 'show', toolsModalMap[id])
+      },
+      toMyAccount () {
+        wepy.navigateTo({
+          url: '/pagesPartner/mine/myAccount'
+        })
+      },
+      toMyIncome (param) {
+        wepy.navigateTo({
+          url: '/pagesPartner/income/myIncome?accumulatedIncome=' + param
+        })
+      },
+      toggleShow(key) {
+        this[key] = !this[key]
+        this.$apply()
+      },
+      switchButtonFn() {
+        const { ifswitchPartner } = this
+        this.switchShow = 1
+        if (~~ifswitchPartner === 0) {
+          this.switchHeader = '确认要立即休息吗？'
+        } else {
+          this.switchHeader = '确认要立即开始营业吗？'
+        }
+        this.$apply()
+      },
+      async switchVoice() {
+        const { isSwitchVoice, partnerId } = this
+        if (isSwitchVoice) {
+          this.isSwitchVoice = false
+          await setVoice(partnerId, 0)
+          this.$parent.globalData.isPlayVoice = false
+        } else {
+          this.isSwitchVoice = true
+          await setVoice(partnerId, 1)
+          this.$parent.globalData.isPlayVoice = true
+          // note: call app `startVoiceListen` function
+          this.$parent.startVoiceListen()
+        }
+      },
+      async switchPhone() {
+        const switchPhone = ~~this.isSwitchPhone === 1 ? 0 : 1
+        remindShowTel(switchPhone).then(() => {
+          if (~~this.isSwitchPhone === 1) {
+            this.isSwitchPhone = 0
+            this.$parent.globalData.isSwitchPhone = 0
+          } else {
+            this.isSwitchPhone = 1
+            this.$parent.globalData.isSwitchPhone = 1
+          }
+          this.$apply()
+        })
+      },
+      async switchRement() {
+        const switchRement = ~~this.isSwitchRement === 1 ? 0 : 1
+        remindShowCode(switchRement).then(() => {
+          if (~~this.isSwitchRement === 1) {
+            this.isSwitchRement = 0
+            this.$parent.globalData.isSwitchRement = 0
+            wepy.showToast({
+              title: '关闭团员提货码',
+              icon: 'none'
+            })
+          } else {
+            this.isSwitchRement = 1
+            this.$parent.globalData.isSwitchRement = 1
+            wepy.showToast({
+              title: '显示团员提货码',
+              icon: 'none'
+            })
+          }
+          this.$apply()
+        }).catch(error => {
+          return wepy.showToast({
+            title: error.errMsg,
+            icon: 'none',
+            direction: 1500
+          })
+        })
+      },
+
+      async onGotUserInfo() {
+        wx.getUserProfile({
+          desc: '用于完善会员资料', 
+          success: res => {
+            this.modalShowDoubleIf = true
+            const { nickName, avatarUrl } = res.userInfo
+            this._isUpdatePartnerInfo(nickName, avatarUrl)
+            this.userDataCope = {
+              avatar: avatarUrl,
+              nickname: nickName
+            }
+          }
+        })  
+      },
+      redirectTo(url, id) {
+        if (id === 'xsyj') {
+          url += '?partnerId=' + this.partnerId
+        }
+        if (id == 'qrUrl') {
+          return this.$wxpage.setData({ showQr: true })
+        }
+        if (id === 'aa') {
+          wepy.navigateTo({
+            url: `${url}?partnerId=${this.defaultPartnerId}`
+          })
+          return
+        }
+        if (id === 'ff') {
+          url += '?partnerId=' + this.partnerId
+        }
+        if (id === 'c') {
+          if (~~this.userType === 2) {
+            return wepy.navigateTo({
+              url: '/pages/newUser/userAuthorize'
+            })
+          } else {
+            cTracking({
+              eventType: 'shtApplyforPartner',
+              columnType: 'myHome',
+            })
+          }
+        }
+        if (id === 'd') {
+          const { userId, grouponId, partnerId } = this.$parent.globalData
+          cTracking({
+            eventType: 'shtCheckMyCoupon',
+            columnType: 'myHome',
+          })
+        }
+        if (id === 'e') {
+          const { userId, grouponId, partnerId } = this.$parent.globalData
+          cTracking({
+            eventType: 'shtCheckPartners',
+            columnType: 'myHome',
+          })
+          if (!this.defaultPartnerId) {
+            return wepy.navigateTo({
+              url: `/pages/newUser/nearbyPartner`
+            })
+          }
+        }
+        if (id === 'h') {
+          url += '?nickname=' + this.userData.nickname
+        }
+        if (id == 'g') {
+          url += `?type=0&grouponId=${this.grouponId}&partnerId=${this.partnerId}`
+        }
+        if (id === 'life') {
+          const { userId, grouponId, partnerId, siteId } = this.$parent.globalData
+          cTracking({
+            eventType: 'lifeList_click',
+            columnType: 'mine'
+          })
+          url += '?partnerId=' + partnerId + '&grouponId=' + grouponId
+        }
+        wepy.navigateTo({
+          url
+        })
+      },
+      clickLogin() {
+        return wepy.navigateTo({
+          url: `/pages/newUser/userAuthorize?refreshAvatar=true`
+        })
+      },
+      taskRefresh() {
+        this.taskError = null
+        this.getPartnerTask()
+      },
+      gotoNewcomer() {
+        this.$parent.globalData.newcomerTicketId = null
+        const { userId, grouponId, partnerId, siteId } = this.$parent.globalData
+        wepy.navigateTo({
+          url: `/pagesPartner/couponList/newComer?newcomerTicketId=${this.newComerTicketId}`
+        })
+        cTracking({
+          eventType: 'shtInviteCoupon',
+          columnType: 'Myhome'
+        })
+      },
+      watchMap(latitude, longitude, nickname, address) {
+        wx.openLocation({
+          latitude: Number(latitude),
+          longitude: Number(longitude),
+          name: nickname,
+          address: address,
+          scale: 10
+        })
+      },
+      openQuestModel() {
+        this.$wxpage.setData({ defaultPartnerShow: true })
+      },
+      hideDefaultPartner() {
+        this.$wxpage.setData({ defaultPartnerShow: false })
+      },
+      hideShowQr() {
+        this.$wxpage.setData({ showQr: false })
+      },
+      LoginClose () {
+        this.$wxpage.setData({ newLogin: false })
+        this.$parent.globalData.isNewLogin = -1
+      },
+      LeaderChangeCardPhoneNum() {
+        this.$wxpage.setData({ newLogin: false })
+        this.$parent.globalData.isNewLogin = -1
+        this.isHasPhone = true
+        this.$parent.globalData.isHasPhone = true
+      },
+      closeAppDownloadTips() {
+        this.appDownloadCountdown = 0
+      },
+      gotoAppDonwload() {
+        if (this.appDownloadCountdown > 0) return
+        const src = APP_DOWNLOAD_LINK
+        wx.navigateTo({
+          url: `/pages/webView/webView?src=${src}&title=下载App`
+        })
+      },
+      gotoAppDonwloadIntegral() {
+        wx.navigateTo({
+          url: `/pages/webView/webView?src=${APP_DOWNLOAD_LINK_INTEGRAL}`
+        })
+      },
+      confirmSwitchGroup() {
+        this.partnerRestFn(this.ifswitchPartner)
+        this.switchShow = 0
+        this.$apply()
+      },
+      cancleSwitchGroup() {
+        this.switchShow = 0
+        this.$apply()
+      }
+    }
+    events = {
+      'modalCommon:confirm': (flag) => {
+        this.doVote(flag, 1)
+      },
+      'modalCommon:close': (flag) => {
+        this.doVote(flag, 2)
+      },
+      'modalShow:close' () {
+        this.madalIf = false
+        this.$apply()
+      },
+      'modalShowDouble:confirm'() {
+        const updataUser = wepy.getStorageSync('updataUser')
+        const dateTime = new Date().getTime()
+        if (updataUser) {
+          if (dateTime - updataUser > 86400000) {
+            this.userIfFn(dateTime)
+          } else {
+            wepy.showToast({
+              title: '一天只能刷新一次哦~',
+              icon: 'none'
+            })
+          }
+        } else {
+          this.userIfFn(dateTime)
+        }
+        this.modalShowDoubleIf = false
+        this.$apply()
+      },
+      'modalShowDouble:close'() {
+        this.modalShowDoubleIf = false
+      }
+    }
+    components = {
+      ModalShowDouble,
+      ModalShow
+    }
+    mixins = []
+
+    watch = {
+    }
+    async getqrFn () {
+      const data = await getqr()
+      this.qrUrl = data
+      this.$apply()
+    }
+    doVote(flag, need) {
+      vote(this.partnerId, need, toolsModalMap[flag].name)
+    }
+    // 账户余额
+    async getMyAccount() {
+      const {
+        accountBalance: { value: accountBalance },
+        salesAmount: { value: todaySales },
+        orderCount,
+        expectedEarn: { value: todayEarn },
+        accumulatedIncome: { value: accumulatedIncome }
+      } = await getPartnerAccountInfo(this.cityId)
+      this.balance = (+accountBalance).toFixed(2) // 余额
+      this.todaySales = (+todaySales).toFixed(2)  // 当前团销售额
+      this.orderCount = orderCount  // 订单量
+      this.todayEarn = (+todayEarn).toFixed(2)   // 团赚
+      this.accumulatedIncome = (+accumulatedIncome).toFixed(2) // 月收
+      this.$apply()
+    }
+
+    async _isUpdatePartnerInfo (nickName, avatarUrl) {
+      const { isPartner } = await getIsPartner()
+      if (isPartner == 1) {
+        const code = await isNotAuthPartner()
+        if (code == 1) {
+          await newPartnerAuthorize(this.wxCode, nickName, avatarUrl)
+        }
+      }
+      this.$apply()
+    }
+
+    isUserCheck() {
+      const { isHasPhone } = this.$parent.globalData
+      if (!isHasPhone) {
+        this.getUserCheckMobileFn()
+      } else {
+        this.$wxpage.setData({ isHasPhone })
+      }
+    }
+    async getUserCheckMobileFn() {
+      const { userType, isNewLogin } = this.$parent.globalData
+      if (isNewLogin == -1) {
+        this.$wxpage.setData({ newLogin: false })
+      } else {
+        const data = await getUserCheckMobile()
+        if (data == 0 && userType == 2) {
+          this.isHasPhone = false
+          this.$wxpage.setData({ newLogin: true })
+          this.$parent.globalData.isHasPhone = false
+        } else {
+          this.isHasPhone = true
+          this.$parent.globalData.isHasPhone = true
+        }
+      }
+    }
+    /**
+     * 获取优惠券
+     */
+    async getMyCoupons () {
+      const { items } = await myCoupons(1, 1, 1, 100, this.parentCityId)
+      this.couponNum = items.length
+      this.$apply()
+    }
+    async getPartnerTask() {
+      try {
+        const { partnerTask, openTask } = await partnerTaskFn()
+        this.openTask = openTask  // 任务开关
+        if (partnerTask) {
+          this.taskData = partnerTask
+          partnerTask.map((res) => {
+            if (~~res.status === 5) {
+              if (~~res.partnerTaskType === 1) {
+                this.closeStatus = 1
+              } else if (~~res.partnerTaskType === 2) {
+                this.closeStatus = 2
+              }
+            } else {
+              if (~~res.partnerTaskType === 2) {
+                this.closeStatus = 3
+              }
+            }
+          })
+          this.$apply()
+        }
+      } catch (error) {
+        this.taskError = error
+        this.$apply()
+      }
+    }
+    /**
+     * 获取用户信息
+     */
+    async checkUser() {
+      const data = await getUserinfo()
+      this.userData = data
+      this.$apply()
+    }
+    async updateUserFn(avatarUrl, nickName) {
+      this.userData = this.userDataCope
+      if (avatarUrl && nickName) {
+        await updateUser(avatarUrl, nickName)
+      }
+    }
+    async partnerRestFn (restNum) {
+      await wepy.showLoading({
+        title: '加载中'
+      })
+      const changeRest = restNum ? 0 : 1
+      const { rest } = await partnerRest(changeRest)
+      this.ifswitchPartner = rest
+      this.$parent.globalData.rest = rest
+      this.$apply()
+      wepy.hideLoading()
+      wepy.reLaunch({
+        url: '/pages/group/groupList'
+      })
+    }
+    async userIfFn(dateTime) {
+      wepy.setStorageSync('updataUser', dateTime)
+      const { avatar, nickname } = this.userDataCope
+      if (avatar !== this.userData.avatar || nickname !== this.userData.nickname) {
+        this.updateUserFn(avatar, nickname)
+      } else {
+        wepy.showToast({
+          title: '个人信息没有修改哦~',
+          icon: 'none'
+        })
+      }
+    }
+
+    async getNewcomberFitAct () {
+      const { siteId, parentCityId, userType } = this.$parent.globalData
+      const data = await newcomberFitAct(siteId, parentCityId)
+      if (!data || !data[0]) return
+      const sendUserType = data[0].sendUserType
+      const endTime = new Date(data[0].endTime.replace(/-/g, '/'))
+      const startTime = new Date(data[0].startTime.replace(/-/g, '/'))
+      const nowTime = new Date()
+      let isDown = false
+      if (sendUserType == 0 && userType != 2) {
+        isDown = true
+      } else if (sendUserType == 1 && userType == 1) {
+        isDown = true
+      } else if (sendUserType == 2 && (userType == 3 || userType == 4)) {
+        isDown = true
+      }
+      if (endTime.getTime() < nowTime.getTime() || startTime.getTime() > nowTime.getTime()) {
+        isDown = false
+      }
+      if (isDown && data.length > 0 && data[0].status == 1) {
+        this.newComerTicketId = data[0].newComerTicketId
+      }
+    }
+
+    async fetchContactUs() {
+      const contactMethods = []
+      this.serviceNumber = ''
+      this.contactUsUrl = ''
+      try {
+        const { partnerId } = wepy.$instance.globalData
+        const { redirectUrl } = await getWebChatuserToken({
+          partnerId
+        })
+        if (redirectUrl && !this.contactUsUrl) {
+          contactMethods.push({ text: '在线客服', value: 1 })
+        }
+        this.contactUsUrl = redirectUrl
+      } catch (e) {
+        // ignore error
+      }
+      try {
+        const { serviceNumber } = await getServiceNumber()
+        if (serviceNumber && !this.serviceNumber) {
+          contactMethods.push({ text: '拨打客服电话', value: 2 })
+        }
+        this.serviceNumber = serviceNumber
+      } catch (e) {
+        // ignore error
+      }
+      this.contactMethods = contactMethods.sort((a, b) => {
+        return a.value - b.value
+      })
+      this.$apply()
+    }
+
+    async onLoad (options) {
+      this.supportCustomTabBar = this.$parent.globalData.supportCustomTabBar
+      this.loaded = false
+      if (!this.options) this.options = options
+      this.globalDataAll = this.$parent.globalData
+      const { userIsPartner, cityId, partnerId, grouponId, userId, level,
+        defaultPartnerId, rest, groupontype, userType, isPlayVoice, isSwitchPhone,
+        isSwitchRement, parentCityId
+      } = this.$parent.globalData
+      this.groupontype = groupontype
+      this.defaultPartnerId = defaultPartnerId
+      this.level = level
+      this.userId = userId
+      this.isPartner = userIsPartner
+      this.grouponId = grouponId
+      this.ifswitchPartner = rest
+      this.partnerId = partnerId
+      this.cityId = cityId
+      this.isSwitchVoice = isPlayVoice
+      this.isSwitchPhone = isSwitchPhone
+      this.isSwitchRement = isSwitchRement
+      this.parentCityId = parentCityId
+      /* if (this.isPartner === 1) {
+        const { beatNumber, beatCityName, salesQuantity } = await mySalesMonthList()
+        this.incomeData = { beatNumber, beatCityName, salesQuantity }
+        this.getMyAccount()
+
+      } */
+      this.loaded = true
+      this.$apply()
+      
+      const { noReadCount: count } = await getNoticeCount()
+      if (!userIsPartner && userType == 1) {
+        this.getqrFn()
+      }
+      this.getPartnerInfo()
+      this.isHasPhone = this.$parent.globalData.isHasPhone
+      this.noticeCount = count
+
+      // fetch contact us
+      this.fetchContactUs()
+      this.$apply()
+
+      if (this.isPartner || userType == 3) {
+        const { status: featuresStatus } = await Api.isCloseLeaderFeatures()
+        if (featuresStatus === 1) {
+          this.leaderFeaturesClosed = false
+        } else {
+          this.leaderFeaturesClosed = true
+        }
+      }
+
+      const { status: downloadStatus } = await Api.showDownloadApp()
+      if (downloadStatus === 1) {
+        this.showAppDownload = true
+        await this.fetchIntegralTotal()
+        if ((this.isPartner || userType == 3) && !wx.getStorageSync('APP_DOWNLOAD_TIPS_FLAG')) {
+          wx.setStorageSync('APP_DOWNLOAD_TIPS_FLAG', true)
+          this.appDownloadCountdown = 4
+          const countdown = setInterval(() => {
+            if (this.appDownloadCountdown === 0) {
+              if (countdown) clearInterval(countdown)
+            }
+            this.appDownloadCountdown--
+            this.$apply()
+          }, 1000)
+        }
+      } else {
+        this.showAppDownload = false
+      }
+      this.$apply()
+    }
+    async onShow() {
+      this.supportCustomTabBar = this.$parent.globalData.supportCustomTabBar
+      this.$tabBarRefresh()
+      const { userId, grouponId, partnerId } = this.$parent.globalData
+      cTracking({
+        eventType: 'shtOpenMyHome',
+        columnType: 'homepage',
+      })
+      if (this.$parent.globalData._applyPartner) {
+        this.$parent.globalData._applyPartner = false
+        this.onLoad()
+      }
+
+      const { userType, userInfo } = this.$parent.globalData
+      this.userInfo = userInfo
+      this.userType = userType
+      await getIsPartner()
+      this.checkUser()
+      this.getMyCoupons()
+      this.getLocationFn()
+
+      if (this.isPartner === 1) {
+        // const { beatNumber, beatCityName, salesQuantity } = await mySalesMonthList()
+        // this.incomeData = { beatNumber, beatCityName, salesQuantity }
+        this.getMyAccount()
+        // this.getPartnerTask()
+      }
+      // cart Count
+      const { totalCount } = await getQueryCartNum(this.grouponId, this.partnerId)
+      if (totalCount) {
+        this.$setTabBarBadge({ index: 3, text: `${totalCount}` })
+      } else {
+        this.$removeTabBarBadge({ index: 3 })
+      }
+      this.isUserCheck()
+      this.getNewcomberFitAct()
+
+      wx.login({
+        success: res => {
+          const { code } = res
+          this.wxCode = code
+        },
+        fail: error => {
+          throw error
+        }
+      })
+      this.$apply()
+    }
+
+    async onPullDownRefresh() {
+      this.showActionsheet = false
+      await this.onLoad(this.options)
+      await this.onShow()
+      wepy.stopPullDownRefresh()
+    }
+
+    async getGroupAssistant () {
+      const { toolsList, isPartner } = this
+      if (isPartner == 1) {
+        const isShowGroupAssistant = await showGroupAssistant()
+        if (isShowGroupAssistant) {
+          const _toolsList = toolsList.map(tool => {
+            if (tool.id === 'eee' || tool.id === 'fff') {
+              tool.isFuture = false
+            }
+            return tool
+          })
+          this.toolsList = _toolsList
+          this.$apply()
+        }
+      }
+    }
+
+    async getPartnerInfo () {
+      const { partnerId, grouponId, defaultPartnerId, defaultGrouponId } = this.$parent.globalData
+
+      try {
+        const {
+          nickname, lat, lng, avatar,
+          residentialname
+        } = await getIndexPartnerInfo(!defaultGrouponId ? grouponId : defaultGrouponId, !defaultPartnerId ? partnerId : defaultPartnerId)
+        this.userDetail = { lat, lng, nickname, avatar, address: residentialname }
+        this.$apply()
+      } catch (error) { }
+    }
+
+    async getLocationFn () {
+      await wepy.getLocation({type: 'wgs84'}).then(res => {
+        this.getHasActiveLife(res.longitude, res.latitude)
+      }).catch(err => {
+        console.log(err)
+      })
+      this.$apply()
+    }
+
+    async getHasActiveLife (lng, lat) {
+      const { grouponId, close, rest } = this.$parent.globalData
+      const data = await hasActiveLife(lng, lat)
+      this.isShowLife = data && grouponId && !close && rest != 1
+      this.$apply()
+    }
+    async fetchIntegralTotal() {
+      try {
+        let data = await getIntegralTotal()
+        this.integralTotal = data && data.totalScore
+      } catch (error) {}
+    }
+  }
+</script>
+<style lang="less">
+  .line {
+    position: absolute;
+    bottom: 95rpx;
+    left: 50%;
+    display: block;
+    width: 622rpx;
+    border-bottom: 1px solid #e9e9eb;
+    content: '';
+    transform: translateX(-50%) scaleY(0.5);
+  }
+  @media screen and (-webkit-min-device-pixel-ratio: 3) {
+    .line {
+      position: absolute;
+      bottom: 95rpx;
+      left: 50%;
+      display: block;
+      width: 622rpx;
+      border-bottom: 1px solid #e9e9eb;
+      content: '';
+      transform: translateX(-50%) scaleY(0.33);
+    }
+  }
+
+  @media screen and (-webkit-min-device-pixel-ratio: 3) {
+    .line {
+      position: absolute;
+      bottom: 95rpx;
+      left: 50%;
+      display: block;
+      width: 622rpx;
+      border-bottom: 1px solid #e9e9eb;
+      content: '';
+      transform: translateX(-50%) scaleY(0.33);
+    }
+  }
+  .bottom {
+    float: left;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+    width: 100%;
+    height: 98rpx;
+  }
+  .qrcode_wrapper {
+    display: flex;
+    margin-top: 10px;
+    padding: 20px 0 15px 0!important;
+    width: 100vw;
+    background: #fff;
+
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+    .title {
+      color: #6cbb15;
+      font-size: 12px;
+    }
+    image {
+      display: block;
+      width: 120px;
+      height: 120px;
+    }
+  }
+  .loadingShow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 11;
+    width: 100%;
+    height: 100vh;
+    background: #fff;
+    .loading image{
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 80rpx;
+      height: 80rpx;
+      transform: translate(-50%,-50%);
+    }
+  }
+  .Z {
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 0rpx 0rpx 70rpx;
+    min-height: 100vh;
+    // float: left;
+    width: 100%;
+    background-color: #f4f4f4;
+    font-family: PingFangSC;
+    zoom: 1;
+    view,image {
+      box-sizing: content-box;
+    }
+
+    .headerBut {
+      position: absolute;
+      top: 0;
+      left: 20rpx;
+      z-index: 100;
+      width: 42px;
+      height: 42px;
+      background: none;
+      &:after {
+        border: none;
+      }
+    }
+    .bgw {
+      position: relative;
+      overflow: hidden;
+      min-height: 160rpx;
+      width: 100%;
+    }
+    .msg {
+      position: absolute;
+      top: 0;
+      left: -20rpx;
+      z-index: 1;
+      width: 100%;
+      height: 50rpx;
+      .leaderCard {
+        position: absolute;
+        top: 55rpx;
+        right: 40rpx;
+        image {
+          width: 48rpx;
+          height: 48rpx;
+        }    
+      }
+      .notice-active::after {
+        content: '';
+        display: block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: red;
+        position: absolute;
+        top: 0;
+        right: 0px;
+      } 
+    }
+    .mt35 {
+      margin-top: 35rpx;
+    }
+    .mt30 {
+      margin-top: 30rpx;
+    }
+    .mt27 {
+      margin-top: 27rpx;
+    }
+    .mt20 {
+      margin-top: 20rpx;
+    }
+    .mt10 {
+      margin-top: 10rpx;
+    }
+    .pl40 {
+      padding-left: 40rpx;
+    }
+    view.pt25 {
+      padding-top: 25rpx;
+    }
+    .section {
+      position: relative;
+      float: left;
+      clear: both;
+      box-sizing: border-box;
+      padding: 0 16rpx 24rpx;
+      width: 100%;
+      .avatar {
+        position: relative;
+        float: left;
+        padding-left: 19rpx;
+        width: 100rpx;
+        height: 100rpx;
+        &>image {
+          width: 100rpx;
+          height: 100rpx;
+          border: 4rpx solid rgba(255,255,255,1);
+          border-radius: 50%;
+          background: url('https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/loginAvatar.png') no-repeat 0;
+          background-size: 100%;
+          box-shadow: 2rpx 2rpx 8rpx 0rpx rgba(210,210,210,1);
+        }
+      }
+      .userInfo {
+        float: left;
+        margin-left: 24rpx;
+        width: 400rpx;
+        .userInfo_inner {
+          display: flex;
+
+          align-items: center;
+        }
+        .assistant_leader_icon {
+          position: relative;
+          margin-left: 10rpx;
+          width: 76rpx;
+          height: 28rpx;
+          border-radius: 3px;
+          background: linear-gradient(132deg,rgba(150,217,57,1) 0%,rgba(117,200,25,1) 100%);
+          color: #fff;
+          font-size: 20rpx;
+          transform: skew(-12deg);
+          text {
+            position: absolute;
+            left: 0;
+            z-index: 10000;
+            width: 76rpx;
+            height: 28rpx;
+            text-align: center;
+            line-height: 28rpx;
+            transform: skew(12deg);
+          }
+        }
+        .userName {
+          overflow: hidden;
+          margin-top: 8rpx;
+          max-width: 280rpx;
+          height: 50rpx;
+          color: #27272a;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          font-weight: 500;
+          font-size: 36rpx;
+          line-height: 50rpx;
+        }
+        .userId {
+          padding-top: 9rpx;
+          height: 33rpx;
+          color: #565658;
+          font-size: 24rpx;
+          line-height: 33rpx;;
+        }
+      }
+      .userInfoLogin {
+        display: flex;
+        flex-direction: column;
+        float: left;
+        margin-left: 33rpx;
+        padding-top: 4rpx;
+        width: 400rpx;
+        height: 98rpx;
+        .userLogin {
+          position: relative;
+          display: flex;
+          width: 160rpx;
+          height: 58rpx;
+          border-radius: 28rpx;
+          color: #04B922;
+          font-size: 28rpx;
+
+          justify-content: center;
+          align-items: center;
+        }
+        .userLogin::after {
+          position: absolute;
+          top: -50%;
+          right: -50%;
+          bottom: -50%;
+          left: -50%;
+          display: block;
+          border: 1rpx solid #04B922;
+          border-radius: 56rpx;
+          content: '';
+          transform: scale(0.5);
+        }
+        .userId {
+          margin-top: 12rpx;
+          color: #27272a;
+          font-size: 24rpx;
+          line-height: 33rpx;
+        }
+      }
+      .msg {
+        float: right;
+        margin: 3rpx 25rpx 0 0;
+        width: 42rpx;
+        height: 40rpx;
+        image {
+          width: 100%;
+          height: 100%;
+        }
+      }
+      .grossEarnings,.accountBalance {
+        float: left;
+        width: 50%;
+        text-align: center;
+        .num {
+          display: inline-block;
+          height: 44rpx;
+          color: #333;
+          font-weight: bold;
+          font-size: 36rpx;
+          line-height: 44rpx;
+        }
+        .gen {
+          height: 42rpx;
+          color: #999;
+          font-size: 24rpx;
+          line-height: 42rpx;;
+        }
+      }
+      .isShow {
+        display: inline-block;
+        margin-left: 15rpx;
+        width: 40rpx;
+        height: 25rpx;
+        image {
+          width: 100%;
+          height: 100%;
+        }
+      }
+    }
+    .more {
+      position: absolute;
+      top: 35rpx;
+      right: 0rpx;
+      width: 135rpx;
+      height: 33rpx;
+      color: #333;
+      font-size: 24rpx;
+      line-height: 33rpx;
+      view {
+        display: inline-block;
+        width: 20rpx;
+        height: 20rpx;
+        image {
+          margin-top: -2px;
+          width: 100%;
+          vertical-align: middle;
+        }
+      }
+
+      text {
+        font-family: "Arial Microsoft Yahei SimHei";
+      }
+    }
+    .styleB {
+      margin-left: 24rpx;
+      padding: 25rpx 16rpx;
+      width: 702rpx;
+      border-radius: 12rpx;
+      background-color: #fff;
+      .arrowBtn {
+        position: absolute;
+        top: 30rpx;
+        right: 22rpx;
+        width: 20rpx;
+        height: 20rpx;
+        image {
+          width: 100%;
+        }
+      }
+      .tips {
+        position: absolute;
+        top: 30rpx;
+        right: 22rpx;
+        height: 33rpx;
+        color: #333;
+        font-size: 24rpx;
+        line-height: 33rpx;
+      }
+      .title {
+        padding-left: 4rpx;
+        height: 45rpx;
+        color: #333;
+        font-weight: bold;
+      }
+
+      .flexBox {
+        display: flex;
+
+        flex-wrap: wrap;
+        justify-content: space-between;
+        .flexItem {
+          view {
+            text-align: center;
+          }
+          view:nth-child(1) {
+            color: #f23030;
+            font-size: 44rpx;
+            line-height: 53rpx;
+          }
+          view:nth-child(2) {
+            margin-top: 16rpx;
+            color: #999;
+            font-size: 24rpx;
+            line-height: 40rpx;
+          }
+        }
+      }
+      .priceBox .flexItem {
+        view:nth-child(1) {
+          font-size: 32rpx;
+        }
+        view:nth-child(2) {
+          margin-top: 9rpx;
+          font-size: 22rpx;
+        }
+      }
+      .myGroup {
+        justify-content: flex-start;
+        .flexItem {
+          position: relative;
+          float: left;
+          padding: 32rpx 0rpx 0rpx;
+          width: 25%;
+          font-size: 24rpx;
+          view:nth-child(2) {
+            color: #333;
+          }
+          .icon {
+            position: relative;
+            width: 55rpx;
+            height: 55rpx;
+            image {
+              width: 100%;
+            }
+            .incoming {
+              position: absolute;
+              top: -25rpx;
+              left: 30rpx;
+              width: 76rpx;
+              height: 28rpx;
+            }
+          }
+        }
+      }
+    }
+    .paddingNone {
+      margin-bottom: 80rpx;
+      padding: 3rpx 16rpx;
+    }
+    .yjzx {
+      &>view:last-child {
+        margin-top: 27rpx;
+        height: 28rpx;
+        color: #999;
+        font-size: 20rpx;
+        line-height: 28rpx;
+      }
+    }
+    .coupon {
+      &>view {
+        position: relative;
+        height: 110rpx;
+        border-bottom: 1rpx solid #eee;
+        font-size: 26rpx;
+        line-height: 110rpx;
+        .arrowBtn {
+          top: 0;
+          right: 0;
+        }
+      }
+      & > view:last-child {
+        border: none;
+      }
+      .couponBox {
+        .arrowBtn {
+          top: 5rpx;
+        }
+        view:nth-child(1) {
+          float: left;
+        }
+        view:nth-child(2) {
+          float: right;
+          color: #333;
+          text:first-child {
+            color: #f23030;
+          }
+          text:nth-child(2) {
+            padding-right: 30rpx;
+          }
+        }
+      }
+      .rest {
+        view:nth-child(1) {
+          float: left;
+        }
+        .switch {
+          float: right;
+          margin-top: 40rpx;
+        }
+      }
+    }
+
+    .icon {
+      margin: 0 auto;
+      width: 48rpx;
+      height: 48rpx;
+      image {
+        width: 100%;
+        height: 100%;;
+      }
+    }
+    .switchButton {
+      position: relative;
+      width: 40px;
+      height: 20px;
+      border: 1px solid #e6e6e6;
+      border-radius: 10px;
+      background: #fff;
+      transition: all 0.1s linear 0s;
+      .switchDat {
+        position: absolute;
+        top: 2rpx;
+        left: 0;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 4px -1px #000;
+        transition: all 0.1s linear 0s;
+      }
+      &.switchIfButton {
+        border: 1px solid #04B922;
+        background: #04B922;
+        .switchDat {
+          left: 22px;
+        }
+      }
+    }
+  }
+  .padding--tabbar-mine {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 118rpx) !important;
+  }
+  .modal__qr .modal__main {
+    display: flex;
+    flex-direction: column;
+    min-width: auto;
+    width: 540rpx;
+    border-radius: 20rpx;
+    background: none !important;
+    .main {
+      padding: 40rpx 0rpx 0rpx;
+      border-radius: 20rpx;
+      background: #fff;
+      .mainText {
+        width: 100%;
+        height: 45rpx;
+        color: #27272a;
+        text-align: center;
+        font-weight: 500;
+        line-height: 45rpx;
+      }
+      image {
+        margin: 32rpx 40rpx 40rpx;
+        width: 460rpx;
+        height: 460rpx;
+      }
+    }
+    .footer {
+      display: flex;
+      width: 100%;
+      height: 120rpx;
+
+      align-items: flex-end;
+      justify-content: center;
+      image {
+        width: 60rpx;
+        height: 60rpx;
+      }
+    }
+  }
+  .modal__copy .modal__main {
+    display: flex;
+    flex-direction: column;
+    padding: 40rpx;
+    width: 540rpx;
+    border-radius: 20rpx;
+    .header {
+      margin-bottom: 20rpx;
+      color: #55575f;
+      text-align: center;
+      font-weight: 500;
+      font-size: 32rpx;
+      line-height: 53rpx;
+    }
+    .main {
+      .mainText {
+        color: #55575f;
+        font-size: 32rpx;
+        line-height: 45rpx;;
+      }
+      .icon-wrapper {
+        display: inline-block;
+        vertical-align: middle;
+      }
+      .icon {
+        margin-right: 12rpx;
+        width: 34rpx;
+        height: 34rpx;
+      }
+      .h1 {
+        color: #50a808;
+        font-size: 40rpx;
+        line-height: 40rpx;
+      }
+      .h2 {
+        margin-top: 20rpx;
+        margin-bottom: 10rpx;
+        color: #50a808;
+        font-weight: 500;
+        font-size: 34rpx;
+        line-height: 34rpx;
+      }
+      .p {
+        margin-bottom: 24rpx;
+        color: #666;
+        font-size: 28rpx;
+        line-height: 37rpx;
+      }
+      .t_p {
+        position: relative;
+        text-indent: 60rpx;
+      }
+      .index_img {
+        position: absolute;
+        top: -7rpx;
+        left: 0rpx;
+        width: 42rpx;
+        height: 42rpx;
+      }
+    }
+    .footer {
+      display: flex;
+      margin-top: 40rpx;
+      width: 100%;
+      height: 88rpx;
+      border-radius: 44px;
+      background: linear-gradient(180deg,rgba(2,197,34,1) 0%,rgba(4,185,34,1) 100%);
+      color: #fff;
+      font-size: 32rpx;
+
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  .gotoInvite {
+    width: 702rpx;
+    height: 180rpx;
+    image {
+      width: 702rpx;
+      height: 180rpx;
+    }
+  }
+  .Z .content {
+    position: relative;
+    margin-left: 24rpx;
+    padding: 0;
+    width: 702rpx;
+    border-radius: 12rpx;
+    background: #fff;
+    .header {
+      display: flex;
+      padding: 0 32rpx;
+      height: 88rpx;
+      align-items: center;
+      justify-content: space-between;
+      &.common-use-header {
+        height: 88rpx;
+        border-radius: 12rpx;
+        background: #fff3e6;
+        color: #904808;
+      }
+      .title {
+        font-weight: 600;
+        font-size: 32rpx;
+        color: #27272A;
+        .title-color {
+          color: #904808;
+        }
+      }
+      .titlepage {
+        display: flex;
+        flex-direction: row;
+
+        align-items: center;
+        image {
+          margin-left: 12rpx;
+          width: 32rpx;
+          height: 32rpx;
+        }
+      }
+      .contentmore {
+        display: flex;
+        flex-direction: row;
+        color: #904808;
+        font-size: 24rpx;
+
+        align-items: center;
+        &.check-g {
+          color: #904808;
+        }
+        image {
+          width: 28rpx;
+          height: 28rpx;
+        }
+      }
+    }
+    .flexBox {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      .orderBg{
+        background-image: url("https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/booking-order-icon-bg.png");
+        background-size: 100%;
+        border-radius:0 0 12rpx 0 
+      }
+      .orderIcon{
+        flex: 1;
+      }
+      .flexItem {
+        display: flex;
+        flex-direction: column;
+        width: 175.5rpx;
+        height: 200rpx;
+        align-items: center;
+        justify-content: center;
+        .iconImage {
+          position: relative;
+          width: 48rpx;
+          height: 48rpx;
+          image {
+            width: 48rpx;
+            height: 48rpx;
+          }
+        }
+        .text {
+          margin-top: 16rpx;
+          height: 40rpx;
+          color: #27272a;
+          font-size: 24rpx;
+          line-height: 40rpx;
+        }
+      }
+    }
+    .otherList .flexItem {
+      height: 154rpx;
+    }
+    .defaultPartner {
+      position: relative;
+      padding: 28rpx 32rpx;
+      min-height:80rpx;
+      &::after {
+        position: absolute;
+        bottom: 0;
+        left: 32rpx;
+        width: calc(100% - 64rpx);
+        height: 1rpx;
+        content: '';
+        display: block;
+        height: 1px;
+        border-bottom: 1px solid #E9E9EB;
+        color: #E9E9EB;
+        -webkit-transform-origin: 0 100%;
+        transform-origin: 0 100%;
+        -webkit-transform: scaleY(0.5);
+        transform: scaleY(0.5);
+      }
+      .user {
+        padding: 0 144rpx 0 100rpx;
+        image {
+          position: absolute;
+          top: 29rpx;
+          left: 32rpx;
+          width: 80rpx;
+          height: 80rpx;
+          border-radius: 8rpx;
+        }
+        .name {
+          color: #27272b;
+          font-weight: 500;
+          font-size: 28rpx;
+          line-height: 40rpx;
+        }
+        .address {
+          margin-top: 8rpx;
+          color: #27272a;
+          font-weight: 400;
+          font-size: 26rpx;
+          line-height: 33rpx;
+        }
+      }
+      .gotoMap {
+        position: absolute;
+        top: 45rpx;
+        right: 32rpx;
+        width: 128rpx;
+        height: 48rpx;
+        border: 2rpx solid #04B922;
+        border-radius: 28rpx;
+        color: #04B922;
+        text-align: center;
+        font-size: 24rpx;
+        line-height: 48rpx;
+      }
+    }
+  }
+  .Z .contentBg {
+    border-radius: 12rpx;
+    // background: #fff url('https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/mine-bg.png') no-repeat 0 0;
+    background-size: 702rpx;
+    .line{
+      position: relative;
+      bottom: 0;
+      margin-top: 27rpx
+      
+    }
+  }
+  .connectPartner {
+    position: relative;
+    padding: 24rpx 36rpx;
+    .connectImage image{
+      position: absolute;
+      top: 50%;
+      left: 36rpx;
+      width: 40rpx;
+      height: 46rpx;
+      transform: translateY(-50%);
+    }
+    .connectText {
+      padding-left: 64rpx;
+      color: #55575f;
+      font-size: 26rpx;
+      line-height: 33rpx;
+      &.service-tel {
+        padding-top: 8rpx;
+      }
+      .service-text {
+        padding-left: 12rpx;
+        color: #04B922;
+      }
+      image {
+        position: relative;
+        top: 5rpx;
+        left: 6rpx;
+        display: inline-block;
+        width: 26rpx;
+        height: 26rpx;
+      }
+    }
+  }
+
+  .app-download {
+    .mask {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      background: #27272a;
+      opacity: 0.8;
+    }
+    image {
+      height: 20rpx;
+    }
+    .tips {
+      position: relative;
+      top: 500rpx;
+      z-index: 101;
+      padding: 0 40rpx;
+      text-align: center;
+    }
+    .tips image {
+      width: 480rpx;
+    }
+    .button {
+      margin: 0 auto;
+      margin-top: 60rpx;
+      min-width: 300rpx;
+      height: 72rpx;
+      border: 2rpx solid white;
+      border-radius: 36rpx;
+      color: white;
+      text-align: center;
+      line-height: 72rpx;
+    }
+    .tips .button {
+      display: inline-block;
+    }
+    .main {
+      position: relative;
+      z-index: 101;
+      padding: 97rpx 32rpx 27rpx;
+      border-radius: 14rpx;
+      background: #fff url('https://shtimgcdn.youhaodongxi.com/miniprogram/weapp-shihuituan/staticImg/app-donwload-description-border.png?1') no-repeat;
+      background-size: 100% 100%;
+      font-size: 28rpx;
+    }
+    .description > view {
+      display: inline;
+    }
+    .main .button {
+      margin-top: 20rpx;
+      width: 259rpx;
+      height: 64rpx;
+      border-radius: 32rpx;
+      background: linear-gradient(180deg,rgba(2,197,34,1) 0%,rgba(4,185,34,1) 100%);
+      text-align: center;
+      font-size: 28rpx;
+      line-height: 64rpx;
+    }
+
+    .block {
+      display: flex;
+      padding: 0 32rpx;
+      height: 120rpx;
+      font-size: 28rpx;
+
+      align-items: center;
+      justify-content: space-between;
+      image {
+        margin-right: 20rpx;
+        width: 64rpx;
+        height: 64rpx;
+      }
+      .left,
+      .right {
+        display: flex;
+
+        align-items: center;
+      }
+      .right {
+        color: #868790;
+        image {
+          width: 20rpx;
+          height: 20rpx;
+        }
+      }
+    }
+  }
+  .deleteGoodsModalMask {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    background: rgba(0,0,0,0.6);
+  }
+  .deleteGoodsModal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 1008;
+    overflow: hidden;
+    padding: 40rpx;
+    width: 600rpx;
+    border-radius: 16rpx;
+    background: #fff;
+    transform: translate(-50%, -50%);
+  }
+  .deleteGoodsModal .btnGroup {
+    display: flex;
+    margin-top: 32rpx;
+  }
+  .deleteGoodsModal .btnGroup .tab {
+    flex: 1;
+    border-radius: 44rpx;
+    text-align: center;
+    font-size: 32rpx;
+    line-height: 88rpx;
+    width: 250rpx
+  }
+  .deleteGoodsModal .btnGroup .normal {
+    position: relative;
+    margin-right: 22rpx;
+    color: #1e1e27;
+  }
+  .deleteGoodsModal .btnGroup .normal::after {
+    position: absolute;
+    top: 0rpx;
+    left: 0rpx;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 1px solid #dadae1;
+    border-radius: 44rpx;
+    content: '';
+  }
+  .deleteGoodsModal .btnGroup .possible {
+    background: linear-gradient(180deg,rgba(2,197,34,1) 0%,rgba(4,185,34,1) 100%);
+    color: #fff;
+  }
+  .deleteGoodsModal .content {
+    color: #55575f;
+    text-align: center;
+    font-size: 32rpx;
+    line-height: 45rpx;
+    width: 520rpx;
+    margin: 0 auto
+  }
+  .deleteGoodsModal .content text{
+    display: inline-block;
+    text-align: left;
+  }
+  .deleteGoodsModal .title {
+    margin-bottom: 16rpx;
+    color: #27272a;
+    text-align: center;
+    font-size: 40rpx;
+    line-height: 56rpx;
+  }
+
+  // 新增我的拼团入口样式
+  .activeNav{
+    height: 160rpx;
+    display: flex;
+    justify-content: space-between;
+    background: #F5F5F5;
+    .activeCoupon,{
+      flex: 1;
+      position: relative;
+      background-color: #fff;
+      border-radius: 12rpx;
+      padding: 16rpx 0 0 24rpx;
+      box-sizing: border-box;
+      margin-right: 21rpx;
+      &:last-child {
+        margin-right: 0;
+      }
+      .itemTitle{
+        font-size: 28rpx;
+        font-weight: 500;
+        color: #27272A;
+        margin-bottom:4rpx;
+      }
+      .itemNum{
+        font-weight: 400;
+        color: #868790;
+        font-size: 24rpx;
+        .itemNum-red {
+          color: rgba(255, 68, 0, 1);
+        }
+      }
+      .itemImage{
+        position: absolute;
+        right: 0;
+        bottom: 4rpx;
+        width:78rpx;
+        height: 78rpx;
+        image{
+          width:78rpx;
+          height: 78rpx;
+          display: block;
+        }
+      }
+    }
+    .activeCoupon2,.activeGroup2,.activeLife2{
+      position: relative;
+      width: 220rpx;
+      background-color: #fff;
+      border-radius: 12rpx;
+      padding: 24rpx;
+      box-sizing: border-box;
+      .couponItem,.groupItem,.lifeItem{
+        position: relative;
+        z-index: 1;
+        .itemTitle{
+          font-size: 32rpx;
+          font-weight: 500;
+          color: #27272A;
+          margin-bottom:4rpx;
+        }
+        .itemNum{
+          font-weight: 400;
+          color: #868790;
+          font-size: 24rpx;
+          text{
+            color: #FF4400;
+          }
+        }
+      }
+      .text-Title {
+        font-size: 28rpx;
+        font-weight: 500;
+        color: #27272A;
+        margin-bottom:4rpx;
+      }
+      .new-icon {
+        position: relative;
+        top: -16rpx;
+        width: 34rpx;
+        height: 25rpx;
+        margin-left: 8rpx;
+        animation: circle 2s linear 0s infinite;
+        transform-origin: 0% 100%;
+      }
+      .itemImage{
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        image{
+          width:78rpx;
+          height: 78rpx;
+          display: block;
+        }
+      }
+    }
+    .activeLife2{
+      .itemImage{
+        image{
+          width: 74rpx;
+          height: 70rpx;
+          margin-right: 8rpx;
+          margin-bottom: 4rpx;
+        }
+      }
+    }
+  }
+  // 分享好友得优惠券样式
+  .shareWx{
+    border-radius: 8rpx;
+    overflow: hidden;
+    image{
+      width:702rpx;
+    height: 180rpx;
+    display: block;
+    }
+  }
+  .activeNav_four {
+    flex-wrap: wrap;
+    background: #FFFFFF;
+    height: 244rpx;
+    overflow: hidden;
+    border-radius: 12rpx;
+    position: relative;
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 24rpx;
+      right: 0;
+      width: calc(100% - 48rpx);
+      height: 1rpx;
+      background: #E9E9EB;
+    }
+    .activeCoupon {
+      width: 50%;
+      height: 50%;
+      flex: none;
+      margin-right: 0;
+      position: relative;
+      padding-top: 22rpx;
+      .itemImage {
+        top: 24rpx;
+        right: 27rpx;
+      }
+    }
+    .activeCoupon:nth-child(odd)::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 0;
+      width: 1rpx;
+      height: 54rpx;
+      transform: translateY(-50%);
+      background: #E9E9EB;
+    }
+  }
+  @keyframes circle {
+    0% {
+      transform: scale(1);
+    }
+    10% {
+      transform: scale(0.8);
+    }
+    20% {
+      transform:rotate(-25deg);
+    }
+    30% {
+      transform:rotate(5deg);
+    }
+    40% {
+      transform: scale(1);
+    }
+        100% { 
+      transform: scale(1);
+    }
+  }
+</style>

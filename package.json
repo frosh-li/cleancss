@@ -1,0 +1,48 @@
+{
+  "name": "@sht/cleancss",
+  "version": "0.0.14",
+  "description": "十荟团小程序清理工具",
+  "main": "lib/main.js",
+  "scripts": {
+    "test": "jest",
+    "build": "babel --presets es2015,stage-1 src/ --out-dir lib/ --source-maps",
+    "watch-compile": "npm run build -- --watch",
+    "watch": "npm run watch-compile",
+    "prettier": "prettier --write \"**/*.{js,json,md,css,html,yml}\"",
+    "prepublish": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlaball.nicetuan.net:fe/base/cleancss.git"
+  },
+  "keywords": [
+    "cli",
+    "cleancss"
+  ],
+  "author": "lijunliang",
+  "license": "MIT",
+  "files": [
+    "lib"
+  ],
+  "bin": {
+    "sht-cleancss": "lib/bin/index.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.10",
+    "colors": "^1.4.0",
+    "pug": "^3.0.2",
+    "strip-indent": "^3.0.0",
+    "stylus": "^0.54.8"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.14.6",
+    "@babel/preset-env": "^7.14.7",
+    "babel": "^6.23.0",
+    "babel-cli": "^6.26.0",
+    "babel-jest": "^27.0.6",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-1": "^6.24.1",
+    "jest": "^27.0.6",
+    "prettier": "^2.3.2"
+  }
+}

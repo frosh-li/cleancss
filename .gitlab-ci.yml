@@ -1,0 +1,25 @@
+image: node:14-alpine
+
+cache:
+  untracked: true
+  key: "$CI_COMMIT_SHA"
+  paths:
+    - node_modules/
+
+stages:
+  - test
+
+variables:
+  GET_SOURCES_ATTEMPTS: 3
+  APP_ENV: "production"
+
+test:
+  stage: test
+  before_script:
+    - npm config set "${NPM_REGISTRY#http:}/:_authToken" $NPM_TOKEN
+  script:
+    - yarn
+    - yarn build
+    - yarn test
+  tags:
+    - docker
